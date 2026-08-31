@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="2250" viewBox="0 0 1600 2250" role="img" aria-labelledby="title desc">
+  <title id="title">Wireframe do aplicativo de controle financeiro pessoal</title>
+  <desc id="desc">Esboço visual com dashboard, gráficos, tabelas de contas, investimentos, dívidas, movimentações e ações de exportação.</desc>
+  <style>
+    .bg { fill: #f4f5f7; }
+    .panel { fill: #ffffff; stroke: #2f3542; stroke-width: 3; }
+    .soft { fill: #eef1f5; stroke: #8b95a7; stroke-width: 2; }
+    .dash { fill: #ffffff; stroke: #8b95a7; stroke-width: 2; stroke-dasharray: 8 8; }
+    .title { font: 700 28px Arial, sans-serif; fill: #2f3542; }
+    .heading { font: 700 20px Arial, sans-serif; fill: #2f3542; }
+    .subheading { font: 700 16px Arial, sans-serif; fill: #2f3542; }
+    .label { font: 700 13px Arial, sans-serif; fill: #5b6472; text-transform: uppercase; }
+    .text { font: 14px Arial, sans-serif; fill: #2f3542; }
+    .small { font: 12px Arial, sans-serif; fill: #5b6472; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="1600" height="2250" rx="0" />
+  <rect class="panel" x="40" y="30" width="1520" height="2190" rx="24" />
+
+  <rect class="panel" x="40" y="30" width="1520" height="110" rx="24" />
+  <rect class="soft" x="72" y="58" width="380" height="54" rx="14" />
+  <text class="title" x="92" y="93">Controle Financeiro Pessoal</text>
+
+  <rect class="dash" x="485" y="60" width="110" height="44" rx="22" /><text class="label" x="515" y="87">Resumo</text>
+  <rect class="dash" x="610" y="60" width="110" height="44" rx="22" /><text class="label" x="643" y="87">Contas</text>
+  <rect class="dash" x="735" y="60" width="150" height="44" rx="22" /><text class="label" x="757" y="87">Investimentos</text>
+  <rect class="dash" x="900" y="60" width="110" height="44" rx="22" /><text class="label" x="934" y="87">Dívidas</text>
+  <rect class="dash" x="1025" y="60" width="165" height="44" rx="22" /><text class="label" x="1053" y="87">Movimentações</text>
+  <rect class="dash" x="1205" y="60" width="120" height="44" rx="22" /><text class="label" x="1237" y="87">Exportar</text>
+
+  <rect class="soft" x="72" y="168" width="466" height="92" rx="18" />
+  <rect class="soft" x="566" y="168" width="466" height="92" rx="18" />
+  <rect class="soft" x="1060" y="168" width="468" height="92" rx="18" />
+  <text class="subheading" x="92" y="200">Salário líquido / receita</text>
+  <text class="subheading" x="586" y="200">Despesas + investimentos</text>
+  <text class="subheading" x="1080" y="200">Saldo final do mês</text>
+  <rect class="dash" x="92" y="218" width="200" height="18" rx="9" />
+  <rect class="dash" x="586" y="218" width="220" height="18" rx="9" />
+  <rect class="dash" x="1080" y="218" width="180" height="18" rx="9" />
+  <text class="small" x="92" y="252">Entrada principal</text>
+  <text class="small" x="586" y="252">Totalizadores</text>
+  <text class="small" x="1080" y="252">Visão rápida</text>
+
+  <rect class="panel" x="72" y="288" width="468" height="320" rx="20" />
+  <rect class="panel" x="566" y="288" width="468" height="320" rx="20" />
+  <rect class="panel" x="1060" y="288" width="468" height="320" rx="20" />
+  <text class="heading" x="92" y="322">Dashboard: distribuição do salário</text>
+  <text class="heading" x="586" y="322">Dashboard: projeção das previdências</text>
+  <text class="heading" x="1080" y="322">Dashboard: quitação das dívidas</text>
+
+  <rect class="dash" x="100" y="350" width="412" height="226" rx="18" />
+  <circle cx="306" cy="460" r="70" fill="none" stroke="#8b95a7" stroke-width="26" />
+  <path d="M306 390 A70 70 0 0 1 375 460" fill="none" stroke="#c0c7d3" stroke-width="26" />
+  <path d="M306 530 A70 70 0 0 1 240 477" fill="none" stroke="#d7dde6" stroke-width="26" />
+  <text class="small" x="162" y="560">Contas Fixas · Variáveis · Investimentos · Viagens · Presentes</text>
+
+  <rect class="dash" x="594" y="350" width="412" height="226" rx="18" />
+  <line x1="620" y1="540" x2="960" y2="540" stroke="#cdd3dc" stroke-width="2" />
+  <line x1="620" y1="390" x2="620" y2="540" stroke="#cdd3dc" stroke-width="2" />
+  <polyline points="632,515 735,475 840,420 950,360" fill="none" stroke="#7f8898" stroke-width="5" />
+  <polyline points="632,526 735,500 840,465 950,440" fill="none" stroke="#bcc4d0" stroke-width="5" stroke-dasharray="10 8" />
+  <circle cx="632" cy="515" r="6" fill="#7f8898" /><circle cx="735" cy="475" r="6" fill="#7f8898" /><circle cx="840" cy="420" r="6" fill="#7f8898" /><circle cx="950" cy="360" r="6" fill="#7f8898" />
+  <circle cx="632" cy="526" r="6" fill="#bcc4d0" /><circle cx="735" cy="500" r="6" fill="#bcc4d0" /><circle cx="840" cy="465" r="6" fill="#bcc4d0" /><circle cx="950" cy="440" r="6" fill="#bcc4d0" />
+  <text class="small" x="620" y="562">Hoje</text><text class="small" x="714" y="562">10 anos</text><text class="small" x="821" y="562">20 anos</text><text class="small" x="926" y="562">30 anos</text>
+  <text class="small" x="856" y="346">R</text><text class="small" x="954" y="430">G</text>
+
+  <rect class="dash" x="1088" y="350" width="412" height="226" rx="18" />
+  <line x1="1114" y1="540" x2="1470" y2="540" stroke="#cdd3dc" stroke-width="2" />
+  <rect x="1140" y="458" width="58" height="82" fill="#cbd2dc" stroke="#7f8898" stroke-width="3" />
+  <rect x="1235" y="425" width="58" height="115" fill="#d8dee7" stroke="#7f8898" stroke-width="3" />
+  <rect x="1330" y="390" width="58" height="150" fill="#e5e9f0" stroke="#7f8898" stroke-width="3" />
+  <rect x="1425" y="340" width="58" height="200" fill="#eff2f6" stroke="#7f8898" stroke-width="3" />
+  <text class="small" x="1134" y="562">Ano 1</text><text class="small" x="1229" y="562">Ano 2</text><text class="small" x="1324" y="562">Ano 3</text><text class="small" x="1411" y="562">Quitação</text>
+
+  <rect class="panel" x="72" y="638" width="728" height="342" rx="20" />
+  <text class="heading" x="92" y="672">Seção de contas fixas</text>
+  <rect class="dash" x="547" y="650" width="120" height="34" rx="10" /><text class="small" x="568" y="671">+ Adicionar</text>
+  <rect class="dash" x="681" y="650" width="98" height="34" rx="10" /><text class="small" x="706" y="671">Remover</text>
+  <rect class="soft" x="92" y="700" width="688" height="42" rx="8" />
+  <text class="label" x="110" y="726">Nome da conta</text><text class="label" x="474" y="726">Valor</text><text class="label" x="635" y="726">Status</text>
+  <rect class="panel" x="92" y="742" width="688" height="62" rx="0" />
+  <rect class="panel" x="92" y="804" width="688" height="62" rx="0" />
+  <rect class="panel" x="92" y="866" width="688" height="62" rx="0" />
+  <text class="text" x="110" y="779">Financiamento</text><text class="text" x="474" y="779">R$ ____</text><text class="text" x="635" y="779">OK</text>
+  <text class="text" x="110" y="841">Condomínio / Energia / Internet</text><text class="text" x="474" y="841">R$ ____</text><text class="text" x="635" y="841">Pendente</text>
+  <text class="text" x="110" y="903">Previdências / Dízimo / Carro</text><text class="text" x="474" y="903">R$ ____</text><text class="text" x="635" y="903">OK</text>
+
+  <rect class="panel" x="832" y="638" width="696" height="342" rx="20" />
+  <text class="heading" x="852" y="672">Seção de contas variáveis (cartões)</text>
+  <rect class="dash" x="1365" y="650" width="142" height="34" rx="10" /><text class="small" x="1384" y="671">+ Adicionar cartão</text>
+  <rect class="soft" x="852" y="700" width="656" height="42" rx="8" />
+  <text class="label" x="870" y="726">Nome do cartão</text><text class="label" x="1140" y="726">Valor total</text><text class="label" x="1350" y="726">Status</text>
+  <rect class="panel" x="852" y="742" width="656" height="62" rx="0" />
+  <rect class="panel" x="852" y="804" width="656" height="62" rx="0" />
+  <rect class="panel" x="852" y="866" width="656" height="62" rx="0" />
+  <text class="text" x="870" y="779">Nubank</text><text class="text" x="1140" y="779">R$ ____</text><text class="text" x="1350" y="779">Aberto</text>
+  <text class="text" x="870" y="841">Santander Elite</text><text class="text" x="1140" y="841">R$ ____</text><text class="text" x="1350" y="841">Fechado</text>
+  <text class="text" x="870" y="903">Outro cartão</text><text class="text" x="1140" y="903">R$ ____</text><text class="text" x="1350" y="903">Pendente</text>
+
+  <rect class="panel" x="72" y="1010" width="728" height="620" rx="20" />
+  <text class="heading" x="92" y="1044">Seção de investimentos</text>
+  <rect class="dash" x="597" y="1022" width="182" height="34" rx="10" /><text class="small" x="617" y="1043">+ Adicionar investimento</text>
+
+  <rect class="panel" x="92" y="1074" width="688" height="220" rx="16" />
+  <text class="subheading" x="112" y="1104">Subseção: previdências</text>
+  <rect class="soft" x="112" y="1122" width="648" height="40" rx="8" />
+  <text class="label" x="128" y="1148">Nome</text><text class="label" x="280" y="1148">Aporte mensal</text><text class="label" x="448" y="1148">Saldo</text><text class="label" x="588" y="1148">Projeção 10/20/30 anos</text>
+  <rect class="panel" x="112" y="1162" width="648" height="50" rx="0" />
+  <rect class="panel" x="112" y="1212" width="648" height="50" rx="0" />
+  <text class="text" x="128" y="1193">Previdência R</text><text class="text" x="280" y="1193">R$ ____</text><text class="text" x="448" y="1193">R$ ____</text><text class="text" x="588" y="1193">10a · 20a · 30a</text>
+  <text class="text" x="128" y="1243">Previdência G</text><text class="text" x="280" y="1243">R$ ____</text><text class="text" x="448" y="1243">R$ ____</text><text class="text" x="588" y="1243">10a · 20a · 30a</text>
+
+  <rect class="panel" x="92" y="1320" width="688" height="280" rx="16" />
+  <text class="subheading" x="112" y="1350">Subseção: poupanças</text>
+  <rect class="soft" x="112" y="1368" width="648" height="40" rx="8" />
+  <text class="label" x="128" y="1394">Nome</text><text class="label" x="260" y="1394">Código</text><text class="label" x="370" y="1394">Saldo atual</text><text class="label" x="496" y="1394">Saldo anterior</text><text class="label" x="636" y="1394">Diferença</text>
+  <rect class="panel" x="112" y="1408" width="648" height="64" rx="0" />
+  <rect class="panel" x="112" y="1472" width="648" height="64" rx="0" />
+  <text class="text" x="128" y="1446">Presentes</text><text class="text" x="260" y="1446">178.8</text><text class="text" x="370" y="1446">R$ ____</text><text class="text" x="496" y="1446">R$ ____</text><text class="text" x="636" y="1446">+/- R$ ____</text>
+  <text class="text" x="128" y="1510">Viagens / Poupanças</text><text class="text" x="260" y="1510">____</text><text class="text" x="370" y="1510">R$ ____</text><text class="text" x="496" y="1510">R$ ____</text><text class="text" x="636" y="1510">+/- R$ ____</text>
+
+  <rect class="panel" x="832" y="1010" width="696" height="620" rx="20" />
+  <text class="heading" x="852" y="1044">Seção de dívidas grandes</text>
+  <rect class="dash" x="1198" y="1022" width="126" height="34" rx="10" /><text class="small" x="1224" y="1043">+ Adicionar</text>
+  <rect class="dash" x="1336" y="1022" width="171" height="34" rx="10" /><text class="small" x="1354" y="1043">Atualizar saldo</text>
+  <rect class="soft" x="852" y="1074" width="656" height="44" rx="8" />
+  <text class="label" x="868" y="1102">Nome da dívida</text><text class="label" x="1080" y="1102">Saldo total</text><text class="label" x="1208" y="1102">Parcela mensal</text><text class="label" x="1354" y="1102">Parcelas</text>
+  <text class="label" x="1450" y="1102">Quitação</text>
+  <rect class="panel" x="852" y="1118" width="656" height="84" rx="0" />
+  <rect class="panel" x="852" y="1202" width="656" height="84" rx="0" />
+  <text class="text" x="868" y="1166">Financiamento imóvel</text><text class="text" x="1080" y="1166">R$ ____</text><text class="text" x="1208" y="1166">R$ ____</text><text class="text" x="1360" y="1166">___</text><text class="text" x="1450" y="1166">__/__/____</text>
+  <text class="text" x="868" y="1250">Consórcio / outra dívida</text><text class="text" x="1080" y="1250">R$ ____</text><text class="text" x="1208" y="1250">R$ ____</text><text class="text" x="1360" y="1250">___</text><text class="text" x="1450" y="1250">__/__/____</text>
+
+  <rect class="dash" x="852" y="1320" width="656" height="278" rx="16" />
+  <text class="subheading" x="876" y="1354">Espaço para visão resumida do cronograma de quitação</text>
+  <line x1="884" y1="1550" x2="1470" y2="1550" stroke="#cdd3dc" stroke-width="2" />
+  <rect x="908" y="1474" width="64" height="76" fill="#cbd2dc" stroke="#7f8898" stroke-width="3" />
+  <rect x="1020" y="1432" width="64" height="118" fill="#d8dee7" stroke="#7f8898" stroke-width="3" />
+  <rect x="1132" y="1388" width="64" height="162" fill="#e5e9f0" stroke="#7f8898" stroke-width="3" />
+  <rect x="1244" y="1340" width="64" height="210" fill="#eff2f6" stroke="#7f8898" stroke-width="3" />
+  <text class="small" x="902" y="1576">Mês 1</text><text class="small" x="1014" y="1576">Ano 1</text><text class="small" x="1126" y="1576">Ano 2</text><text class="small" x="1238" y="1576">Quitação</text>
+
+  <rect class="panel" x="72" y="1660" width="1456" height="360" rx="20" />
+  <text class="heading" x="92" y="1694">Seção de movimentações</text>
+  <rect class="dash" x="1208" y="1672" width="164" height="34" rx="10" /><text class="small" x="1228" y="1693">+ Registrar</text>
+  <rect class="dash" x="1382" y="1672" width="125" height="34" rx="10" /><text class="small" x="1401" y="1693">Devolvido</text>
+  <rect class="soft" x="92" y="1726" width="1416" height="46" rx="8" />
+  <text class="label" x="110" y="1754">De qual conta saiu</text>
+  <text class="label" x="396" y="1754">Para pagar qual dívida</text>
+  <text class="label" x="754" y="1754">Valor</text>
+  <text class="label" x="932" y="1754">Data estimada de devolução</text>
+  <text class="label" x="1320" y="1754">Status</text>
+  <rect class="panel" x="92" y="1772" width="1416" height="82" rx="0" />
+  <rect class="panel" x="92" y="1854" width="1416" height="82" rx="0" />
+  <text class="text" x="110" y="1818">Poupança / Conta reserva</text>
+  <text class="text" x="396" y="1818">Dívida grande / cartão</text>
+  <text class="text" x="754" y="1818">R$ ____</text>
+  <text class="text" x="932" y="1818">__/__/____</text>
+  <text class="text" x="1320" y="1818">Em aberto</text>
+  <text class="text" x="110" y="1900">Investimento / Viagem</text>
+  <text class="text" x="396" y="1900">Quitação extra</text>
+  <text class="text" x="754" y="1900">R$ ____</text>
+  <text class="text" x="932" y="1900">__/__/____</text>
+  <text class="text" x="1320" y="1900">Devolvido</text>
+
+  <rect class="panel" x="40" y="2076" width="1520" height="144" rx="0" />
+  <rect class="dash" x="92" y="2120" width="210" height="44" rx="22" /><text class="label" x="144" y="2147">Exportar PDF</text>
+  <rect class="dash" x="332" y="2120" width="220" height="44" rx="22" /><text class="label" x="385" y="2147">Exportar JSON</text>
+  <rect class="dash" x="582" y="2120" width="278" height="44" rx="22" /><text class="label" x="640" y="2147">Carregar JSON anterior</text>
+  <rect class="dash" x="890" y="2120" width="236" height="44" rx="22" /><text class="label" x="946" y="2147">Salvar dados locais</text>
+  <text class="small" x="92" y="2104">Fluxo previsto: PDF para leitura visual + JSON para pré-preenchimento do mês seguinte.</text>
+</svg>
