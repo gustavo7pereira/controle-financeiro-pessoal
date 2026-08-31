@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle Financeiro Pessoal</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --warning: #d97706;
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  a { color: var(--primary); }
+
+  /* NAV */
+  nav {
+    background: var(--primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    flex-wrap: wrap;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  }
+  nav .logo { font-weight: 700; font-size: 1.1rem; padding: 14px 8px 14px 0; flex-shrink: 0; }
+  nav button {
+    background: transparent; border: none; color: rgba(255,255,255,.85);
+    padding: 14px 10px; cursor: pointer; font-size: .875rem; white-space: nowrap;
+    border-bottom: 3px solid transparent; transition: .15s;
+  }
+  nav button:hover, nav button.active { color: #fff; border-bottom-color: #fff; }
+  nav .spacer { flex: 1; }
+  nav .month-ctrl { display: flex; align-items: center; gap: 6px; padding: 8px 0; }
+  nav .month-ctrl select, nav .month-ctrl input {
+    background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+    color: #fff; border-radius: 6px; padding: 4px 8px; font-size: .8rem;
+  }
+  nav .month-ctrl option { background: var(--primary-dark); }
+
+  /* LAYOUT */
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--card); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .card-title { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 6px; }
+  .card-value { font-size: 1.6rem; font-weight: 700; }
+  .card-value.green { color: var(--success); }
+  .card-value.red { color: var(--danger); }
+
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 14px; margin-bottom: 20px; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 14px; margin-bottom: 20px; }
+
+  /* SECTION HEADER */
+  .sec-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .sec-header h2 { font-size: 1.1rem; font-weight: 700; }
+  .sec-header .badge {
+    background: var(--primary); color: #fff;
+    border-radius: 20px; padding: 2px 10px; font-size: .75rem;
+  }
+
+  /* TABLE */
+  .tbl-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+  th { background: #f8fafc; text-align: left; padding: 8px 10px; font-size: .75rem;
+       text-transform: uppercase; color: var(--text-muted); border-bottom: 2px solid var(--border); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fafc; }
+
+  /* INPUTS */
+  input[type=text], input[type=number], input[type=date], select, textarea {
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 10px; font-size: .875rem; width: 100%;
+    background: #fff; color: var(--text); transition: .15s;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
+  .inp-sm { max-width: 120px; }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: none; border-radius: 6px; cursor: pointer;
+    font-size: .875rem; padding: 7px 14px; font-weight: 500; transition: .15s;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #15803d; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #b91c1c; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-outline:hover { background: #f8fafc; }
+  .btn-sm { padding: 4px 10px; font-size: .8rem; }
+  .btn-icon { background: transparent; border: none; cursor: pointer; padding: 4px; color: var(--text-muted); border-radius: 4px; }
+  .btn-icon:hover { background: #f1f5f9; color: var(--danger); }
+
+  /* FORM ROW */
+  .form-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; align-items: flex-end; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
+  .form-group label { font-size: .75rem; color: var(--text-muted); font-weight: 500; }
+
+  /* BADGE STATUS */
+  .badge-ok { background: #dcfce7; color: #166534; border-radius: 20px; padding: 2px 10px; font-size: .75rem; }
+  .badge-warn { background: #fef9c3; color: #854d0e; border-radius: 20px; padding: 2px 10px; font-size: .75rem; }
+  .badge-err { background: #fee2e2; color: #991b1b; border-radius: 20px; padding: 2px 10px; font-size: .75rem; }
+
+  /* CHART */
+  #chart-canvas { max-width: 420px; margin: 0 auto; }
+  .chart-legend { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+  .chart-legend-item { display: flex; align-items: center; gap: 6px; font-size: .8rem; }
+  .chart-legend-color { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.4); z-index: 200;
+    justify-content: center; align-items: center; padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card); border-radius: var(--radius);
+    padding: 24px; width: 100%; max-width: 480px;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,.25);
+  }
+  .modal h3 { margin-bottom: 16px; font-size: 1rem; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+  /* MISC */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  .text-right { text-align: right; }
+  .text-muted { color: var(--text-muted); font-size: .85rem; }
+  .mt8 { margin-top: 8px; }
+  .mt16 { margin-top: 16px; }
+  .diff-pos { color: var(--success); font-size: .8rem; }
+  .diff-neg { color: var(--danger); font-size: .8rem; }
+  .tag-devolvido { background: #dcfce7; color: #166534; border-radius: 4px; padding: 1px 7px; font-size: .75rem; }
+  .tag-pendente { background: #fee2e2; color: #991b1b; border-radius: 4px; padding: 1px 7px; font-size: .75rem; }
+
+  @media(max-width:600px){
+    nav { gap: 0; }
+    nav button { padding: 12px 8px; font-size: .8rem; }
+    .card-value { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">💰 Finanças</div>
+  <button class="active" onclick="showSection('dashboard')">Dashboard</button>
+  <button onclick="showSection('contas')">Contas</button>
+  <button onclick="showSection('investimentos')">Investimentos</button>
+  <button onclick="showSection('dividas')">Dívidas</button>
+  <button onclick="showSection('movimentacoes')">Movimentações</button>
+  <button onclick="showSection('relatorio')">Relatório</button>
+  <div class="spacer"></div>
+  <div class="month-ctrl">
+    <select id="sel-month" onchange="changeMonth()">
+      <option value="1">Jan</option><option value="2">Fev</option>
+      <option value="3">Mar</option><option value="4">Abr</option>
+      <option value="5">Mai</option><option value="6">Jun</option>
+      <option value="7">Jul</option><option value="8">Ago</option>
+      <option value="9">Set</option><option value="10">Out</option>
+      <option value="11">Nov</option><option value="12">Dez</option>
+    </select>
+    <input type="number" id="sel-year" min="2020" max="2099" style="width:72px" onchange="changeMonth()">
+    <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3)" onclick="loadPreviousMonth()">↩ Mês ant.</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ==================== DASHBOARD ==================== -->
+<div class="section active" id="section-dashboard">
+  <div class="sec-header">
+    <h2>📊 Dashboard — <span id="dash-month-label"></span></h2>
+    <button class="btn btn-outline btn-sm" onclick="openSalaryModal()">✏️ Salário</button>
+  </div>
+
+  <div class="grid2" id="dash-cards"></div>
+
+  <div class="card mt16">
+    <div class="sec-header" style="margin-bottom:12px">
+      <h2 style="font-size:.95rem">Destino do Salário</h2>
+    </div>
+    <canvas id="chart-canvas" height="300"></canvas>
+    <div class="chart-legend" id="chart-legend"></div>
+  </div>
+</div>
+
+<!-- ==================== CONTAS ==================== -->
+<div class="section" id="section-contas">
+  <div class="sec-header">
+    <h2>📋 Contas Mensais</h2>
+    <button class="btn btn-primary btn-sm" onclick="openAddContaModal('fixa')">+ Fixa</button>
+    <button class="btn btn-outline btn-sm" onclick="openAddContaModal('variavel')">+ Variável</button>
+  </div>
+
+  <div class="grid3">
+    <div class="card">
+      <div class="card-title">Total Fixas</div>
+      <div class="card-value red" id="total-fixas">R$ 0,00</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Total Variáveis</div>
+      <div class="card-value red" id="total-variaveis">R$ 0,00</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Total Contas</div>
+      <div class="card-value red" id="total-contas">R$ 0,00</div>
+    </div>
+  </div>
+
+  <div class="card mt16">
+    <div class="sec-header"><h2 style="font-size:.95rem">🔒 Contas Fixas</h2></div>
+    <div class="tbl-wrap">
+      <table id="tbl-fixas">
+        <thead><tr><th>Nome</th><th>Valor (R$)</th><th></th></tr></thead>
+        <tbody></tbody>
+        <tfoot><tr><td colspan="3"></td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="card mt16">
+    <div class="sec-header"><h2 style="font-size:.95rem">🔄 Contas Variáveis</h2></div>
+    <div class="tbl-wrap">
+      <table id="tbl-variaveis">
+        <thead><tr><th>Nome</th><th>Valor (R$)</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== INVESTIMENTOS ==================== -->
+<div class="section" id="section-investimentos">
+  <div class="sec-header">
+    <h2>📈 Investimentos e Poupanças</h2>
+    <button class="btn btn-primary btn-sm" onclick="openAddPoupancaModal()">+ Poupança</button>
+    <button class="btn btn-outline btn-sm" onclick="openAddViagemModal()">+ Viagem</button>
+  </div>
+
+  <!-- Previdências -->
+  <div class="card mt16">
+    <div class="sec-header"><h2 style="font-size:.95rem">🛡️ Previdências Privadas</h2></div>
+    <div class="tbl-wrap">
+      <table id="tbl-previdencias">
+        <thead><tr><th>Nome</th><th>Aporte Mensal</th><th>Saldo Atual</th><th>+10 anos</th><th>+20 anos</th><th>+30 anos</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <button class="btn btn-outline btn-sm mt8" onclick="openAddPrevidenciaModal()">+ Previdência</button>
+  </div>
+
+  <!-- Poupanças -->
+  <div class="card mt16">
+    <div class="sec-header"><h2 style="font-size:.95rem">🏦 Poupanças</h2></div>
+    <div class="tbl-wrap">
+      <table id="tbl-poupancas">
+        <thead><tr><th>Nome</th><th>Código</th><th>Saldo Atual</th><th>Mês Ant.</th><th>Variação</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Presentes -->
+  <div class="card mt16">
+    <div class="sec-header"><h2 style="font-size:.95rem">🎁 Presentes</h2></div>
+    <div class="tbl-wrap">
+      <table id="tbl-presentes">
+        <thead><tr><th>Nome</th><th>Código</th><th>Saldo Atual</th><th>Mês Ant.</th><th>Variação</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <button class="btn btn-outline btn-sm mt8" onclick="openAddPresenteModal()">+ Presente</button>
+  </div>
+
+  <!-- Viagens -->
+  <div class="card mt16">
+    <div class="sec-header"><h2 style="font-size:.95rem">✈️ Viagens</h2></div>
+    <div class="tbl-wrap">
+      <table id="tbl-viagens">
+        <thead><tr><th>Nome</th><th>Código</th><th>Saldo Atual</th><th>Mês Ant.</th><th>Variação</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DÍVIDAS ==================== -->
+<div class="section" id="section-dividas">
+  <div class="sec-header">
+    <h2>💳 Dívidas Grandes</h2>
+    <button class="btn btn-primary btn-sm" onclick="openAddDividaModal()">+ Dívida</button>
+  </div>
+  <div id="dividas-list"></div>
+</div>
+
+<!-- ==================== MOVIMENTAÇÕES ==================== -->
+<div class="section" id="section-movimentacoes">
+  <div class="sec-header">
+    <h2>🔀 Movimentações entre Contas</h2>
+    <button class="btn btn-primary btn-sm" onclick="openAddMovModal()">+ Registrar</button>
+  </div>
+  <div class="card">
+    <div class="tbl-wrap">
+      <table id="tbl-movimentacoes">
+        <thead><tr><th>Data</th><th>Origem</th><th>Destino/Motivo</th><th>Valor</th><th>Devolução Prev.</th><th>Status</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== RELATÓRIO ==================== -->
+<div class="section" id="section-relatorio">
+  <div class="sec-header">
+    <h2>📄 Relatório — <span id="rel-month-label"></span></h2>
+    <button class="btn btn-primary" onclick="exportPDF()">⬇️ Exportar PDF</button>
+  </div>
+  <div id="relatorio-content"></div>
+</div>
+
+</main>
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- Salary Modal -->
+<div class="modal-overlay" id="modal-salary">
+  <div class="modal">
+    <h3>💰 Salário do Mês</h3>
+    <div class="form-group">
+      <label>Salário Líquido (R$)</label>
+      <input type="number" id="inp-salary" min="0" step="0.01" placeholder="0,00">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-salary')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveSalary()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Conta Modal -->
+<div class="modal-overlay" id="modal-add-conta">
+  <div class="modal">
+    <h3 id="modal-conta-title">+ Conta</h3>
+    <input type="hidden" id="inp-conta-type">
+    <input type="hidden" id="inp-conta-edit-id">
+    <div class="form-group">
+      <label>Nome</label>
+      <input type="text" id="inp-conta-nome" placeholder="Ex: Energia">
+    </div>
+    <div class="form-group mt8">
+      <label>Valor (R$)</label>
+      <input type="number" id="inp-conta-valor" min="0" step="0.01" placeholder="0,00">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-conta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveConta()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Poupança Modal -->
+<div class="modal-overlay" id="modal-add-poupanca">
+  <div class="modal">
+    <h3 id="modal-poup-title">+ Poupança</h3>
+    <input type="hidden" id="inp-poup-type">
+    <input type="hidden" id="inp-poup-edit-id">
+    <div class="form-group">
+      <label>Nome</label>
+      <input type="text" id="inp-poup-nome" placeholder="Ex: Poupança Itaú">
+    </div>
+    <div class="form-group mt8">
+      <label>Código</label>
+      <input type="text" id="inp-poup-codigo" placeholder="Ex: 1234-5">
+    </div>
+    <div class="form-group mt8">
+      <label>Saldo Atual (R$)</label>
+      <input type="number" id="inp-poup-saldo" min="0" step="0.01" placeholder="0,00">
+    </div>
+    <div class="form-group mt8">
+      <label>Saldo Mês Anterior (R$)</label>
+      <input type="number" id="inp-poup-saldo-ant" min="0" step="0.01" placeholder="0,00">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-poupanca')">Cancelar</button>
+      <button class="btn btn-primary" onclick="savePoupanca()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Previdência Modal -->
+<div class="modal-overlay" id="modal-add-previdencia">
+  <div class="modal">
+    <h3 id="modal-prev-title">+ Previdência</h3>
+    <input type="hidden" id="inp-prev-edit-id">
+    <div class="form-group">
+      <label>Nome</label>
+      <input type="text" id="inp-prev-nome" placeholder="Ex: Previdência (R)">
+    </div>
+    <div class="form-group mt8">
+      <label>Aporte Mensal Fixo (R$)</label>
+      <input type="number" id="inp-prev-aporte" min="0" step="0.01" placeholder="0,00">
+    </div>
+    <div class="form-group mt8">
+      <label>Saldo Atual (R$)</label>
+      <input type="number" id="inp-prev-saldo" min="0" step="0.01" placeholder="0,00">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-previdencia')">Cancelar</button>
+      <button class="btn btn-primary" onclick="savePrevidencia()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Dívida Modal -->
+<div class="modal-overlay" id="modal-add-divida">
+  <div class="modal">
+    <h3 id="modal-div-title">+ Dívida Grande</h3>
+    <input type="hidden" id="inp-div-edit-id">
+    <div class="form-group">
+      <label>Nome</label>
+      <input type="text" id="inp-div-nome" placeholder="Ex: Financiamento Imóvel">
+    </div>
+    <div class="form-group mt8">
+      <label>Saldo Total Devedor (R$)</label>
+      <input type="number" id="inp-div-saldo" min="0" step="0.01" placeholder="0,00">
+    </div>
+    <div class="form-group mt8">
+      <label>Parcela Mensal (R$)</label>
+      <input type="number" id="inp-div-parcela" min="0" step="0.01" placeholder="0,00">
+    </div>
+    <div class="form-group mt8">
+      <label>Parcelas Restantes</label>
+      <input type="number" id="inp-div-parcelas" min="1" step="1" placeholder="Ex: 120">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-divida')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveDivida()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Movimentação Modal -->
+<div class="modal-overlay" id="modal-add-mov">
+  <div class="modal">
+    <h3>+ Registrar Movimentação</h3>
+    <input type="hidden" id="inp-mov-edit-id">
+    <div class="form-group">
+      <label>Data</label>
+      <input type="date" id="inp-mov-data">
+    </div>
+    <div class="form-group mt8">
+      <label>Conta Origem (poupança usada)</label>
+      <input type="text" id="inp-mov-origem" placeholder="Ex: Poupança Itaú">
+    </div>
+    <div class="form-group mt8">
+      <label>Destino / Motivo</label>
+      <input type="text" id="inp-mov-destino" placeholder="Ex: Pagar parcela Financiamento">
+    </div>
+    <div class="form-group mt8">
+      <label>Valor (R$)</label>
+      <input type="number" id="inp-mov-valor" min="0" step="0.01" placeholder="0,00">
+    </div>
+    <div class="form-group mt8">
+      <label>Data Prevista de Devolução</label>
+      <input type="date" id="inp-mov-devolucao">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-mov')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMov()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Viagem Modal -->
+<div class="modal-overlay" id="modal-add-viagem">
+  <div class="modal">
+    <h3 id="modal-viag-title">+ Viagem</h3>
+    <input type="hidden" id="inp-viag-edit-id">
+    <div class="form-group">
+      <label>Nome da Viagem</label>
+      <input type="text" id="inp-viag-nome" placeholder="Ex: Viagem Europa">
+    </div>
+    <div class="form-group mt8">
+      <label>Código</label>
+      <input type="text" id="inp-viag-codigo" placeholder="Ex: 9999">
+    </div>
+    <div class="form-group mt8">
+      <label>Saldo Atual (R$)</label>
+      <input type="number" id="inp-viag-saldo" min="0" step="0.01" placeholder="0,00">
+    </div>
+    <div class="form-group mt8">
+      <label>Saldo Mês Anterior (R$)</label>
+      <input type="number" id="inp-viag-saldo-ant" min="0" step="0.01" placeholder="0,00">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-viagem')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveViagem()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Presente Modal -->
+<div class="modal-overlay" id="modal-add-presente">
+  <div class="modal">
+    <h3 id="modal-pres-title">+ Presente</h3>
+    <input type="hidden" id="inp-pres-edit-id">
+    <div class="form-group">
+      <label>Nome</label>
+      <input type="text" id="inp-pres-nome" placeholder="Ex: Aniversário">
+    </div>
+    <div class="form-group mt8">
+      <label>Código</label>
+      <input type="text" id="inp-pres-codigo" placeholder="Ex: 178.8">
+    </div>
+    <div class="form-group mt8">
+      <label>Saldo Atual (R$)</label>
+      <input type="number" id="inp-pres-saldo" min="0" step="0.01" placeholder="0,00">
+    </div>
+    <div class="form-group mt8">
+      <label>Saldo Mês Anterior (R$)</label>
+      <input type="number" id="inp-pres-saldo-ant" min="0" step="0.01" placeholder="0,00">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-presente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="savePresente()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script>
+// ─── State ───────────────────────────────────────────────
+const STORAGE_KEY = 'financeiro_v2';
+let currentMonth = new Date().getMonth() + 1;
+let currentYear  = new Date().getFullYear();
+
+function monthKey(m, y) { return `${y}-${String(m).padStart(2,'0')}`; }
+
+function defaultData() {
+  return {
+    salary: 0,
+    contas: {
+      fixas: [
+        {id:uid(), nome:'Financiamento', valor:0},
+        {id:uid(), nome:'Previdência (R)', valor:0},
+        {id:uid(), nome:'Dízimo', valor:0},
+        {id:uid(), nome:'Condomínio', valor:0},
+        {id:uid(), nome:'Energia', valor:0},
+        {id:uid(), nome:'Internet', valor:0},
+        {id:uid(), nome:'Carro', valor:0},
+        {id:uid(), nome:'Seguro', valor:0},
+        {id:uid(), nome:'Premiere', valor:0},
+        {id:uid(), nome:'Previdência (G)', valor:0},
+      ],
+      variaveis: [
+        {id:uid(), nome:'Lanches', valor:0},
+        {id:uid(), nome:'Gasolina', valor:0},
+        {id:uid(), nome:'Academia', valor:0},
+        {id:uid(), nome:'Farmácia', valor:0},
+        {id:uid(), nome:'Churrasco', valor:0},
+        {id:uid(), nome:'Belinha', valor:0},
+        {id:uid(), nome:'Ademais', valor:0},
+        {id:uid(), nome:'Nosso Dinheiro (Rebeca)', valor:200},
+        {id:uid(), nome:'Nosso Dinheiro (Gustavo)', valor:200},
+      ]
+    },
+    poupancas: [
+      {id:uid(), nome:'Poupança Itaú', codigo:'', saldo:0, saldoAnt:0},
+      {id:uid(), nome:'Dinheiro Gu', codigo:'', saldo:0, saldoAnt:0},
+    ],
+    presentes: [
+      {id:uid(), nome:'Presentes', codigo:'178.8', saldo:0, saldoAnt:0},
+    ],
+    viagens: [],
+    previdencias: [
+      {id:uid(), nome:'Previdência (R)', aporte:0, saldo:0},
+      {id:uid(), nome:'Previdência (G)', aporte:0, saldo:0},
+    ],
+    dividas: [],
+    movimentacoes: [],
+  };
+}
+
+function uid() { return Math.random().toString(36).slice(2,9); }
+
+// ─── Storage ─────────────────────────────────────────────
+function loadAll() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e) { return {}; }
+}
+function saveAll(all) { localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); }
+
+function getData(m, y) {
+  const all = loadAll();
+  const k = monthKey(m, y);
+  if (!all[k]) all[k] = defaultData();
+  return all[k];
+}
+
+function setData(m, y, data) {
+  const all = loadAll();
+  all[monthKey(m, y)] = data;
+  saveAll(all);
+}
+
+let data = getData(currentMonth, currentYear);
+
+function save() { setData(currentMonth, currentYear, data); refreshAll(); }
+
+// ─── Navigation ──────────────────────────────────────────
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'relatorio') renderRelatorio();
+  if (name === 'dashboard') renderChart();
+}
+
+function changeMonth() {
+  currentMonth = parseInt(document.getElementById('sel-month').value);
+  currentYear  = parseInt(document.getElementById('sel-year').value);
+  data = getData(currentMonth, currentYear);
+  refreshAll();
+}
+
+function loadPreviousMonth() {
+  let pm = currentMonth - 1, py = currentYear;
+  if (pm < 1) { pm = 12; py--; }
+  const prev = getData(pm, py);
+  // Copy structure (names+values for fixed/variable), reset investment balances
+  const cur = getData(currentMonth, currentYear);
+  cur.salary = prev.salary;
+  cur.contas = JSON.parse(JSON.stringify(prev.contas));
+  // Give new IDs to avoid collisions
+  cur.contas.fixas.forEach(c => c.id = uid());
+  cur.contas.variaveis.forEach(c => c.id = uid());
+  // Copy poupancas/viagens/presentes/previdencias structure, shift saldoAnt
+  ['poupancas','viagens','presentes'].forEach(cat => {
+    cur[cat] = JSON.parse(JSON.stringify(prev[cat]));
+    cur[cat].forEach(p => { p.id = uid(); p.saldoAnt = p.saldo; });
+  });
+  cur.previdencias = JSON.parse(JSON.stringify(prev.previdencias));
+  cur.previdencias.forEach(p => { p.id = uid(); p.saldo = p.saldo + p.aporte; });
+  cur.dividas = JSON.parse(JSON.stringify(prev.dividas));
+  cur.dividas.forEach(d => {
+    d.id = uid();
+    d.saldo = Math.max(0, d.saldo - d.parcela);
+    d.parcelas = Math.max(0, d.parcelas - 1);
+  });
+  cur.movimentacoes = JSON.parse(JSON.stringify(prev.movimentacoes));
+  data = cur;
+  setData(currentMonth, currentYear, data);
+  refreshAll();
+  alert('Estrutura do mês anterior carregada! Revise e ajuste os valores.');
+}
+
+// ─── Refresh ─────────────────────────────────────────────
+function refreshAll() {
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const label = `${months[currentMonth-1]} / ${currentYear}`;
+  document.getElementById('dash-month-label').textContent = label;
+  document.getElementById('rel-month-label').textContent = label;
+  document.getElementById('sel-month').value = currentMonth;
+  document.getElementById('sel-year').value  = currentYear;
+
+  renderDashCards();
+  renderChart();
+  renderContas();
+  renderInvestimentos();
+  renderDividas();
+  renderMovimentacoes();
+}
+
+// ─── Formatters ──────────────────────────────────────────
+function fmt(v) {
+  return 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtDiff(cur, ant) {
+  const d = (cur||0) - (ant||0);
+  if (d === 0) return '<span class="text-muted">—</span>';
+  return d > 0
+    ? `<span class="diff-pos">▲ ${fmt(d)}</span>`
+    : `<span class="diff-neg">▼ ${fmt(Math.abs(d))}</span>`;
+}
+function addMonths(d, n) {
+  const dt = new Date(d);
+  dt.setMonth(dt.getMonth() + n);
+  return dt;
+}
+function monthName(dt) {
+  return dt.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+}
+
+// ─── Dashboard ───────────────────────────────────────────
+function calcTotals() {
+  const fixas    = data.contas.fixas.reduce((a,c)=>a+(+c.valor||0),0);
+  const variaveis= data.contas.variaveis.reduce((a,c)=>a+(+c.valor||0),0);
+  const prev     = data.previdencias.reduce((a,p)=>a+(+p.aporte||0),0);
+  const viagens  = data.viagens.reduce((a,v)=>a+(+v.saldo||0),0);
+  const divParcela= data.dividas.reduce((a,d)=>a+(+d.parcela||0),0);
+  const totalDesp = fixas + variaveis;
+  const saldo     = (data.salary||0) - totalDesp;
+  return {fixas, variaveis, prev, viagens, divParcela, totalDesp, saldo};
+}
+
+function renderDashCards() {
+  const t = calcTotals();
+  const saldoClass = t.saldo >= 0 ? 'green' : 'red';
+  const badge = t.saldo >= 0
+    ? '<span class="badge-ok">Superávit</span>'
+    : '<span class="badge-err">Déficit</span>';
+  document.getElementById('dash-cards').innerHTML = `
+    <div class="card">
+      <div class="card-title">Salário Líquido</div>
+      <div class="card-value">${fmt(data.salary)}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Total Despesas</div>
+      <div class="card-value red">${fmt(t.totalDesp)}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Saldo Final ${badge}</div>
+      <div class="card-value ${saldoClass}">${fmt(t.saldo)}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Contas Fixas</div>
+      <div class="card-value red">${fmt(t.fixas)}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Contas Variáveis</div>
+      <div class="card-value red">${fmt(t.variaveis)}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Previdências (aporte)</div>
+      <div class="card-value" style="color:var(--primary)">${fmt(t.prev)}</div>
+    </div>
+  `;
+}
+
+// ─── Chart (pure canvas) ─────────────────────────────────
+const CHART_COLORS = ['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d'];
+
+function renderChart() {
+  const t = calcTotals();
+  const categories = [
+    {label:'Contas Fixas',  value: t.fixas},
+    {label:'Contas Variáveis', value: t.variaveis},
+    {label:'Previdências',  value: t.prev},
+    {label:'Viagens (saldo)', value: t.viagens},
+    {label:'Saldo Livre',   value: Math.max(0, t.saldo)},
+  ].filter(c => c.value > 0);
+
+  const canvas = document.getElementById('chart-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width = 400, H = canvas.height = 300;
+  const cx = W/2, cy = H/2, r = Math.min(W,H)*0.38;
+  ctx.clearRect(0,0,W,H);
+
+  const total = categories.reduce((a,c)=>a+c.value,0);
+  if (total === 0) {
+    ctx.fillStyle = '#94a3b8'; ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center'; ctx.fillText('Sem dados', cx, cy);
+    document.getElementById('chart-legend').innerHTML = '';
+    return;
+  }
+
+  let angle = -Math.PI/2;
+  categories.forEach((cat, i) => {
+    const slice = (cat.value / total) * 2 * Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, angle, angle + slice);
+    ctx.closePath();
+    ctx.fillStyle = CHART_COLORS[i % CHART_COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    angle += slice;
+  });
+
+  // legend
+  const legend = document.getElementById('chart-legend');
+  legend.innerHTML = categories.map((c,i) => `
+    <div class="chart-legend-item">
+      <div class="chart-legend-color" style="background:${CHART_COLORS[i%CHART_COLORS.length]}"></div>
+      <span>${c.label}: ${fmt(c.value)} (${((c.value/total)*100).toFixed(1)}%)</span>
+    </div>
+  `).join('');
+}
+
+// ─── Contas ──────────────────────────────────────────────
+function renderContas() {
+  const fixas = data.contas.fixas;
+  const vars  = data.contas.variaveis;
+  const tFixed = fixas.reduce((a,c)=>a+(+c.valor||0),0);
+  const tVar   = vars.reduce((a,c)=>a+(+c.valor||0),0);
+  document.getElementById('total-fixas').textContent    = fmt(tFixed);
+  document.getElementById('total-variaveis').textContent = fmt(tVar);
+  document.getElementById('total-contas').textContent    = fmt(tFixed + tVar);
+
+  renderContaTable('tbl-fixas', fixas, 'fixa');
+  renderContaTable('tbl-variaveis', vars, 'variavel');
+}
+
+function renderContaTable(tableId, list, type) {
+  const tbody = document.querySelector(`#${tableId} tbody`);
+  tbody.innerHTML = list.map(c => `
+    <tr>
+      <td>${c.nome}</td>
+      <td>
+        <input type="number" class="inp-sm" value="${c.valor||0}" step="0.01"
+          onchange="updateContaValor('${c.id}','${type}',this.value)">
+      </td>
+      <td>
+        <button class="btn-icon" title="Editar" onclick="openEditContaModal('${c.id}','${type}')">✏️</button>
+        <button class="btn-icon" title="Remover" onclick="removeConta('${c.id}','${type}')">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function updateContaValor(id, type, val) {
+  const list = type === 'fixa' ? data.contas.fixas : data.contas.variaveis;
+  const item = list.find(c => c.id === id);
+  if (item) { item.valor = parseFloat(val)||0; save(); }
+}
+
+function openAddContaModal(type) {
+  document.getElementById('modal-conta-title').textContent = type === 'fixa' ? '+ Conta Fixa' : '+ Conta Variável';
+  document.getElementById('inp-conta-type').value = type;
+  document.getElementById('inp-conta-edit-id').value = '';
+  document.getElementById('inp-conta-nome').value = '';
+  document.getElementById('inp-conta-valor').value = '';
+  openModal('modal-add-conta');
+}
+
+function openEditContaModal(id, type) {
+  const list = type === 'fixa' ? data.contas.fixas : data.contas.variaveis;
+  const item = list.find(c => c.id === id);
+  if (!item) return;
+  document.getElementById('modal-conta-title').textContent = 'Editar Conta';
+  document.getElementById('inp-conta-type').value = type;
+  document.getElementById('inp-conta-edit-id').value = id;
+  document.getElementById('inp-conta-nome').value = item.nome;
+  document.getElementById('inp-conta-valor').value = item.valor;
+  openModal('modal-add-conta');
+}
+
+function saveConta() {
+  const type   = document.getElementById('inp-conta-type').value;
+  const editId = document.getElementById('inp-conta-edit-id').value;
+  const nome   = document.getElementById('inp-conta-nome').value.trim();
+  const valor  = parseFloat(document.getElementById('inp-conta-valor').value)||0;
+  if (!nome) return alert('Informe o nome da conta.');
+  const list = type === 'fixa' ? data.contas.fixas : data.contas.variaveis;
+  if (editId) {
+    const item = list.find(c => c.id === editId);
+    if (item) { item.nome = nome; item.valor = valor; }
+  } else {
+    list.push({id:uid(), nome, valor});
+  }
+  closeModal('modal-add-conta');
+  save();
+}
+
+function removeConta(id, type) {
+  if (!confirm('Remover esta conta?')) return;
+  const list = type === 'fixa' ? data.contas.fixas : data.contas.variaveis;
+  const idx = list.findIndex(c => c.id === id);
+  if (idx >= 0) { list.splice(idx,1); save(); }
+}
+
+// ─── Investimentos ───────────────────────────────────────
+function renderInvestimentos() {
+  renderPoupancaTable('tbl-poupancas', data.poupancas, 'poupanca');
+  renderPoupancaTable('tbl-presentes', data.presentes, 'presente');
+  renderPoupancaTable('tbl-viagens', data.viagens, 'viagem');
+  renderPrevidencias();
+}
+
+function renderPoupancaTable(tableId, list, editType) {
+  const tbody = document.querySelector(`#${tableId} tbody`);
+  tbody.innerHTML = list.map(p => `
+    <tr>
+      <td>${p.nome}</td>
+      <td><span class="text-muted">${p.codigo||'—'}</span></td>
+      <td>${fmt(p.saldo)}</td>
+      <td>${fmt(p.saldoAnt)}</td>
+      <td>${fmtDiff(p.saldo, p.saldoAnt)}</td>
+      <td>
+        <button class="btn-icon" onclick="openEditPoupancaModal('${p.id}','${editType}')">✏️</button>
+        <button class="btn-icon" onclick="removePoupanca('${p.id}','${editType}')">🗑️</button>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="6" class="text-muted" style="text-align:center">Nenhum registro</td></tr>';
+}
+
+function renderPrevidencias() {
+  const tbody = document.querySelector('#tbl-previdencias tbody');
+  tbody.innerHTML = data.previdencias.map(p => {
+    const aporte = +p.aporte||0;
+    const saldo  = +p.saldo||0;
+    // Simple linear projection (no interest assumed unless you add a rate)
+    const proj10 = saldo + aporte * 12 * 10;
+    const proj20 = saldo + aporte * 12 * 20;
+    const proj30 = saldo + aporte * 12 * 30;
+    return `
+      <tr>
+        <td>${p.nome}</td>
+        <td>${fmt(aporte)}/mês</td>
+        <td>${fmt(saldo)}</td>
+        <td>${fmt(proj10)}</td>
+        <td>${fmt(proj20)}</td>
+        <td>${fmt(proj30)}</td>
+        <td>
+          <button class="btn-icon" onclick="openEditPrevidenciaModal('${p.id}')">✏️</button>
+          <button class="btn-icon" onclick="removePrevidencia('${p.id}')">🗑️</button>
+        </td>
+      </tr>`;
+  }).join('') || '<tr><td colspan="7" class="text-muted" style="text-align:center">Nenhuma previdência</td></tr>';
+}
+
+function openAddPoupancaModal() {
+  document.getElementById('modal-poup-title').textContent = '+ Poupança';
+  document.getElementById('inp-poup-type').value = 'poupanca';
+  document.getElementById('inp-poup-edit-id').value = '';
+  ['nome','codigo','saldo','saldo-ant'].forEach(f => document.getElementById('inp-poup-'+f).value = '');
+  openModal('modal-add-poupanca');
+}
+
+function openEditPoupancaModal(id, editType) {
+  const list = editType === 'poupanca' ? data.poupancas : editType === 'presente' ? data.presentes : data.viagens;
+  const item = list.find(p => p.id === id);
+  if (!item) return;
+  document.getElementById('modal-poup-title').textContent = 'Editar';
+  document.getElementById('inp-poup-type').value = editType;
+  document.getElementById('inp-poup-edit-id').value = id;
+  document.getElementById('inp-poup-nome').value = item.nome;
+  document.getElementById('inp-poup-codigo').value = item.codigo||'';
+  document.getElementById('inp-poup-saldo').value = item.saldo;
+  document.getElementById('inp-poup-saldo-ant').value = item.saldoAnt||0;
+  openModal('modal-add-poupanca');
+}
+
+function savePoupanca() {
+  const type   = document.getElementById('inp-poup-type').value;
+  const editId = document.getElementById('inp-poup-edit-id').value;
+  const nome   = document.getElementById('inp-poup-nome').value.trim();
+  const codigo = document.getElementById('inp-poup-codigo').value.trim();
+  const saldo  = parseFloat(document.getElementById('inp-poup-saldo').value)||0;
+  const saldoAnt = parseFloat(document.getElementById('inp-poup-saldo-ant').value)||0;
+  if (!nome) return alert('Informe o nome.');
+  const list = type === 'poupanca' ? data.poupancas : type === 'presente' ? data.presentes : data.viagens;
+  if (editId) {
+    const item = list.find(p => p.id === editId);
+    if (item) Object.assign(item, {nome, codigo, saldo, saldoAnt});
+  } else {
+    list.push({id:uid(), nome, codigo, saldo, saldoAnt});
+  }
+  closeModal('modal-add-poupanca');
+  save();
+}
+
+function removePoupanca(id, editType) {
+  if (!confirm('Remover?')) return;
+  const list = editType === 'poupanca' ? data.poupancas : editType === 'presente' ? data.presentes : data.viagens;
+  const idx = list.findIndex(p => p.id === id);
+  if (idx >= 0) { list.splice(idx,1); save(); }
+}
+
+function openAddViagemModal() {
+  document.getElementById('modal-viag-title').textContent = '+ Viagem';
+  document.getElementById('inp-viag-edit-id').value = '';
+  ['nome','codigo','saldo','saldo-ant'].forEach(f => document.getElementById('inp-viag-'+f).value = '');
+  openModal('modal-add-viagem');
+}
+
+function saveViagem() {
+  const editId   = document.getElementById('inp-viag-edit-id').value;
+  const nome     = document.getElementById('inp-viag-nome').value.trim();
+  const codigo   = document.getElementById('inp-viag-codigo').value.trim();
+  const saldo    = parseFloat(document.getElementById('inp-viag-saldo').value)||0;
+  const saldoAnt = parseFloat(document.getElementById('inp-viag-saldo-ant').value)||0;
+  if (!nome) return alert('Informe o nome.');
+  if (editId) {
+    const item = data.viagens.find(v => v.id === editId);
+    if (item) Object.assign(item, {nome, codigo, saldo, saldoAnt});
+  } else {
+    data.viagens.push({id:uid(), nome, codigo, saldo, saldoAnt});
+  }
+  closeModal('modal-add-viagem');
+  save();
+}
+
+function openAddPresenteModal() {
+  document.getElementById('modal-pres-title').textContent = '+ Presente';
+  document.getElementById('inp-pres-edit-id').value = '';
+  ['nome','codigo','saldo','saldo-ant'].forEach(f => document.getElementById('inp-pres-'+f).value = '');
+  openModal('modal-add-presente');
+}
+
+function savePresente() {
+  const editId   = document.getElementById('inp-pres-edit-id').value;
+  const nome     = document.getElementById('inp-pres-nome').value.trim();
+  const codigo   = document.getElementById('inp-pres-codigo').value.trim();
+  const saldo    = parseFloat(document.getElementById('inp-pres-saldo').value)||0;
+  const saldoAnt = parseFloat(document.getElementById('inp-pres-saldo-ant').value)||0;
+  if (!nome) return alert('Informe o nome.');
+  if (editId) {
+    const item = data.presentes.find(p => p.id === editId);
+    if (item) Object.assign(item, {nome, codigo, saldo, saldoAnt});
+  } else {
+    data.presentes.push({id:uid(), nome, codigo, saldo, saldoAnt});
+  }
+  closeModal('modal-add-presente');
+  save();
+}
+
+function openAddPrevidenciaModal() {
+  document.getElementById('modal-prev-title').textContent = '+ Previdência';
+  document.getElementById('inp-prev-edit-id').value = '';
+  ['nome','aporte','saldo'].forEach(f => document.getElementById('inp-prev-'+f).value = '');
+  openModal('modal-add-previdencia');
+}
+
+function openEditPrevidenciaModal(id) {
+  const item = data.previdencias.find(p => p.id === id);
+  if (!item) return;
+  document.getElementById('modal-prev-title').textContent = 'Editar Previdência';
+  document.getElementById('inp-prev-edit-id').value = id;
+  document.getElementById('inp-prev-nome').value   = item.nome;
+  document.getElementById('inp-prev-aporte').value = item.aporte;
+  document.getElementById('inp-prev-saldo').value  = item.saldo;
+  openModal('modal-add-previdencia');
+}
+
+function savePrevidencia() {
+  const editId = document.getElementById('inp-prev-edit-id').value;
+  const nome   = document.getElementById('inp-prev-nome').value.trim();
+  const aporte = parseFloat(document.getElementById('inp-prev-aporte').value)||0;
+  const saldo  = parseFloat(document.getElementById('inp-prev-saldo').value)||0;
+  if (!nome) return alert('Informe o nome.');
+  if (editId) {
+    const item = data.previdencias.find(p => p.id === editId);
+    if (item) Object.assign(item, {nome, aporte, saldo});
+  } else {
+    data.previdencias.push({id:uid(), nome, aporte, saldo});
+  }
+  closeModal('modal-add-previdencia');
+  save();
+}
+
+function removePrevidencia(id) {
+  if (!confirm('Remover previdência?')) return;
+  data.previdencias = data.previdencias.filter(p => p.id !== id);
+  save();
+}
+
+// ─── Dívidas ─────────────────────────────────────────────
+function renderDividas() {
+  const container = document.getElementById('dividas-list');
+  if (!data.dividas.length) {
+    container.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px">Nenhuma dívida cadastrada.</p>';
+    return;
+  }
+  container.innerHTML = data.dividas.map(d => {
+    const saldo   = +d.saldo||0;
+    const parcela = +d.parcela||0;
+    const parcelas= +d.parcelas||0;
+    const mesesCalc = parcela > 0 ? Math.ceil(saldo / parcela) : parcelas;
+    const dtQuit  = addMonths(new Date(), mesesCalc);
+    const pct     = d.saldoOriginal ? Math.min(100, ((d.saldoOriginal - saldo)/d.saldoOriginal*100)) : 0;
+    return `
+      <div class="card mt16">
+        <div class="sec-header">
+          <h2 style="font-size:1rem">${d.nome}</h2>
+          <span class="badge-warn">${parcelas} parcela(s) restante(s)</span>
+          <div style="flex:1"></div>
+          <button class="btn btn-outline btn-sm" onclick="openEditDividaModal('${d.id}')">✏️ Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="removeDivida('${d.id}')">🗑️</button>
+        </div>
+        <div class="grid3">
+          <div>
+            <div class="card-title">Saldo Devedor</div>
+            <div style="font-size:1.3rem;font-weight:700;color:var(--danger)">${fmt(saldo)}</div>
+          </div>
+          <div>
+            <div class="card-title">Parcela Mensal</div>
+            <div style="font-size:1.3rem;font-weight:700">${fmt(parcela)}</div>
+          </div>
+          <div>
+            <div class="card-title">Quitação Estimada</div>
+            <div style="font-size:1rem;font-weight:600;color:var(--success)">${monthName(dtQuit)}</div>
+          </div>
+        </div>
+        ${d.saldoOriginal ? `
+        <div style="margin-top:12px">
+          <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px">
+            <span>Progresso de pagamento</span>
+            <span>${pct.toFixed(1)}%</span>
+          </div>
+          <div style="background:#e2e8f0;border-radius:4px;height:8px">
+            <div style="background:var(--success);width:${pct}%;height:8px;border-radius:4px;transition:.4s"></div>
+          </div>
+        </div>` : ''}
+        <div class="mt8">
+          <button class="btn btn-outline btn-sm" onclick="openAporteDividaModal('${d.id}')">💰 Aporte Extra</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openAddDividaModal() {
+  document.getElementById('modal-div-title').textContent = '+ Dívida Grande';
+  document.getElementById('inp-div-edit-id').value = '';
+  ['nome','saldo','parcela','parcelas'].forEach(f => document.getElementById('inp-div-'+f).value = '');
+  openModal('modal-add-divida');
+}
+
+function openEditDividaModal(id) {
+  const item = data.dividas.find(d => d.id === id);
+  if (!item) return;
+  document.getElementById('modal-div-title').textContent = 'Editar Dívida';
+  document.getElementById('inp-div-edit-id').value = id;
+  document.getElementById('inp-div-nome').value    = item.nome;
+  document.getElementById('inp-div-saldo').value   = item.saldo;
+  document.getElementById('inp-div-parcela').value = item.parcela;
+  document.getElementById('inp-div-parcelas').value= item.parcelas;
+  openModal('modal-add-divida');
+}
+
+function saveDivida() {
+  const editId  = document.getElementById('inp-div-edit-id').value;
+  const nome    = document.getElementById('inp-div-nome').value.trim();
+  const saldo   = parseFloat(document.getElementById('inp-div-saldo').value)||0;
+  const parcela = parseFloat(document.getElementById('inp-div-parcela').value)||0;
+  const parcelas= parseInt(document.getElementById('inp-div-parcelas').value)||0;
+  if (!nome) return alert('Informe o nome da dívida.');
+  if (editId) {
+    const item = data.dividas.find(d => d.id === editId);
+    if (item) Object.assign(item, {nome, saldo, parcela, parcelas});
+  } else {
+    data.dividas.push({id:uid(), nome, saldo, saldoOriginal: saldo, parcela, parcelas});
+  }
+  closeModal('modal-add-divida');
+  save();
+}
+
+function removeDivida(id) {
+  if (!confirm('Remover dívida?')) return;
+  data.dividas = data.dividas.filter(d => d.id !== id);
+  save();
+}
+
+function openAporteDividaModal(id) {
+  const item = data.dividas.find(d => d.id === id);
+  if (!item) return;
+  const val = prompt(`Aporte extra para "${item.nome}" (valor a subtrair do saldo devedor):`);
+  const aporte = parseFloat(val);
+  if (isNaN(aporte) || aporte <= 0) return;
+  item.saldo = Math.max(0, item.saldo - aporte);
+  item.parcelas = item.parcela > 0 ? Math.ceil(item.saldo / item.parcela) : item.parcelas;
+  save();
+}
+
+// ─── Movimentações ───────────────────────────────────────
+function renderMovimentacoes() {
+  const tbody = document.querySelector('#tbl-movimentacoes tbody');
+  if (!data.movimentacoes.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-muted" style="text-align:center">Nenhuma movimentação registrada.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.movimentacoes.map(m => {
+    const statusBadge = m.devolvido
+      ? '<span class="tag-devolvido">Devolvido</span>'
+      : '<span class="tag-pendente">Pendente</span>';
+    const actionBtn = m.devolvido
+      ? `<button class="btn-icon" title="Remover" onclick="removeMov('${m.id}')">🗑️</button>`
+      : `<button class="btn btn-success btn-sm" onclick="markDevolvido('${m.id}')">✅ Devolvido</button>
+         <button class="btn-icon" onclick="removeMov('${m.id}')">🗑️</button>`;
+    return `
+      <tr>
+        <td>${m.data}</td>
+        <td>${m.origem}</td>
+        <td>${m.destino}</td>
+        <td>${fmt(m.valor)}</td>
+        <td>${m.devolucao || '—'}</td>
+        <td>${statusBadge}</td>
+        <td>${actionBtn}</td>
+      </tr>`;
+  }).join('');
+}
+
+function openAddMovModal() {
+  document.getElementById('inp-mov-edit-id').value = '';
+  document.getElementById('inp-mov-data').value    = new Date().toISOString().slice(0,10);
+  ['origem','destino','valor','devolucao'].forEach(f => document.getElementById('inp-mov-'+f).value = '');
+  openModal('modal-add-mov');
+}
+
+function saveMov() {
+  const editId   = document.getElementById('inp-mov-edit-id').value;
+  const data_    = document.getElementById('inp-mov-data').value;
+  const origem   = document.getElementById('inp-mov-origem').value.trim();
+  const destino  = document.getElementById('inp-mov-destino').value.trim();
+  const valor    = parseFloat(document.getElementById('inp-mov-valor').value)||0;
+  const devolucao= document.getElementById('inp-mov-devolucao').value;
+  if (!origem || !destino) return alert('Preencha origem e destino.');
+  if (editId) {
+    const item = data.movimentacoes.find(m => m.id === editId);
+    if (item) Object.assign(item, {data:data_, origem, destino, valor, devolucao});
+  } else {
+    data.movimentacoes.push({id:uid(), data:data_, origem, destino, valor, devolucao, devolvido:false});
+  }
+  closeModal('modal-add-mov');
+  save();
+}
+
+function markDevolvido(id) {
+  const item = data.movimentacoes.find(m => m.id === id);
+  if (item) { item.devolvido = true; save(); }
+}
+
+function removeMov(id) {
+  if (!confirm('Remover movimentação?')) return;
+  data.movimentacoes = data.movimentacoes.filter(m => m.id !== id);
+  save();
+}
+
+// ─── Relatório ───────────────────────────────────────────
+function renderRelatorio() {
+  const t = calcTotals();
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const label = `${months[currentMonth-1]} / ${currentYear}`;
+  const saldoClass = t.saldo >= 0 ? 'color:var(--success)' : 'color:var(--danger)';
+  const statusLabel = t.saldo >= 0 ? '✅ Superávit' : '❌ Déficit';
+
+  document.getElementById('relatorio-content').innerHTML = `
+    <div id="print-area">
+      <div class="card">
+        <h3 style="margin-bottom:12px">📊 Resumo Mensal — ${label}</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:.9rem">
+          <tr><td style="padding:6px 0"><b>Salário Líquido</b></td><td class="text-right">${fmt(data.salary)}</td></tr>
+          <tr><td style="padding:6px 0">Contas Fixas</td><td class="text-right" style="color:var(--danger)">- ${fmt(t.fixas)}</td></tr>
+          <tr><td style="padding:6px 0">Contas Variáveis</td><td class="text-right" style="color:var(--danger)">- ${fmt(t.variaveis)}</td></tr>
+          <tr style="border-top:2px solid var(--border)">
+            <td style="padding:8px 0"><b>Saldo Final</b> — ${statusLabel}</td>
+            <td class="text-right" style="font-weight:700;${saldoClass}">${fmt(t.saldo)}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card mt16">
+        <h3 style="margin-bottom:12px">🔒 Contas Fixas</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+          ${data.contas.fixas.map(c=>`<tr><td style="padding:4px 0">${c.nome}</td><td class="text-right">${fmt(c.valor)}</td></tr>`).join('')}
+          <tr style="border-top:1px solid var(--border);font-weight:700">
+            <td style="padding:6px 0">Total</td><td class="text-right">${fmt(t.fixas)}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card mt16">
+        <h3 style="margin-bottom:12px">🔄 Contas Variáveis</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+          ${data.contas.variaveis.map(c=>`<tr><td style="padding:4px 0">${c.nome}</td><td class="text-right">${fmt(c.valor)}</td></tr>`).join('')}
+          <tr style="border-top:1px solid var(--border);font-weight:700">
+            <td style="padding:6px 0">Total</td><td class="text-right">${fmt(t.variaveis)}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card mt16">
+        <h3 style="margin-bottom:12px">🛡️ Previdências</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+          <tr><th style="text-align:left;padding:4px 0;color:var(--text-muted)">Nome</th><th style="text-align:right;color:var(--text-muted)">Aporte</th><th style="text-align:right;color:var(--text-muted)">Saldo</th></tr>
+          ${data.previdencias.map(p=>`<tr><td style="padding:4px 0">${p.nome}</td><td class="text-right">${fmt(p.aporte)}/mês</td><td class="text-right">${fmt(p.saldo)}</td></tr>`).join('')}
+        </table>
+      </div>
+
+      <div class="card mt16">
+        <h3 style="margin-bottom:12px">🏦 Poupanças</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+          <tr><th style="text-align:left;padding:4px 0;color:var(--text-muted)">Nome</th><th style="text-align:right;color:var(--text-muted)">Código</th><th style="text-align:right;color:var(--text-muted)">Saldo Atual</th><th style="text-align:right;color:var(--text-muted)">Mês Ant.</th></tr>
+          ${[...data.poupancas,...data.presentes,...data.viagens].map(p=>`<tr><td style="padding:4px 0">${p.nome}</td><td class="text-right">${p.codigo||'—'}</td><td class="text-right">${fmt(p.saldo)}</td><td class="text-right">${fmt(p.saldoAnt)}</td></tr>`).join('')}
+        </table>
+      </div>
+
+      ${data.dividas.length ? `
+      <div class="card mt16">
+        <h3 style="margin-bottom:12px">💳 Dívidas</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+          <tr><th style="text-align:left;padding:4px 0;color:var(--text-muted)">Nome</th><th style="text-align:right;color:var(--text-muted)">Saldo</th><th style="text-align:right;color:var(--text-muted)">Parcela</th><th style="text-align:right;color:var(--text-muted)">Quitação</th></tr>
+          ${data.dividas.map(d=>{
+            const m = d.parcela > 0 ? Math.ceil(d.saldo/d.parcela) : d.parcelas;
+            return `<tr><td style="padding:4px 0">${d.nome}</td><td class="text-right" style="color:var(--danger)">${fmt(d.saldo)}</td><td class="text-right">${fmt(d.parcela)}</td><td class="text-right">${monthName(addMonths(new Date(),m))}</td></tr>`;
+          }).join('')}
+        </table>
+      </div>` : ''}
+
+      ${data.movimentacoes.length ? `
+      <div class="card mt16">
+        <h3 style="margin-bottom:12px">🔀 Movimentações</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+          <tr><th style="text-align:left;padding:4px 0;color:var(--text-muted)">Data</th><th style="text-align:left;color:var(--text-muted)">Origem</th><th style="text-align:left;color:var(--text-muted)">Destino</th><th style="text-align:right;color:var(--text-muted)">Valor</th><th style="text-align:right;color:var(--text-muted)">Status</th></tr>
+          ${data.movimentacoes.map(m=>`<tr><td style="padding:4px 0">${m.data}</td><td>${m.origem}</td><td>${m.destino}</td><td class="text-right">${fmt(m.valor)}</td><td class="text-right">${m.devolvido?'Devolvido':'Pendente'}</td></tr>`).join('')}
+        </table>
+      </div>` : ''}
+    </div>
+  `;
+}
+
+function exportPDF() {
+  renderRelatorio();
+  const printContent = document.getElementById('print-area').innerHTML;
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const label = `${months[currentMonth-1]}_${currentYear}`;
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head>
+    <meta charset="UTF-8">
+    <title>Controle Financeiro — ${label}</title>
+    <style>
+      body { font-family: 'Segoe UI', sans-serif; color: #1e293b; max-width: 800px; margin: 20px auto; padding: 0 16px; }
+      .card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+      table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+      th { text-align: left; padding: 4px 0; color: #64748b; }
+      td { padding: 4px 0; }
+      .text-right { text-align: right; }
+      h3 { font-size: 1rem; margin-bottom: 10px; }
+      @media print { body { margin: 0; } }
+    </style>
+  </head><body>${printContent}</body></html>`);
+  win.document.close();
+  setTimeout(() => { win.print(); }, 400);
+}
+
+// ─── Salary Modal ────────────────────────────────────────
+function openSalaryModal() {
+  document.getElementById('inp-salary').value = data.salary || '';
+  openModal('modal-salary');
+}
+
+function saveSalary() {
+  data.salary = parseFloat(document.getElementById('inp-salary').value)||0;
+  closeModal('modal-salary');
+  save();
+}
+
+// ─── Modal helpers ───────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+});
+
+// ─── Init ────────────────────────────────────────────────
+refreshAll();
+</script>
+</body>
+</html>
