@@ -166,12 +166,12 @@
 
 <nav>
   <div class="logo">💰 Finanças</div>
-  <button class="active" onclick="showSection('dashboard')">Dashboard</button>
+  <button class="active" onclick="showSection('dashboard')">Resumo</button>
   <button onclick="showSection('contas')">Contas</button>
   <button onclick="showSection('investimentos')">Investimentos</button>
   <button onclick="showSection('dividas')">Dívidas</button>
   <button onclick="showSection('movimentacoes')">Movimentações</button>
-  <button onclick="showSection('relatorio')">Relatório</button>
+  <button onclick="showSection('relatorio')">Exportar</button>
   <div class="spacer"></div>
   <div class="month-ctrl">
     <select id="sel-month" onchange="changeMonth()">
@@ -202,8 +202,23 @@
     <div class="sec-header" style="margin-bottom:12px">
       <h2 style="font-size:.95rem">Destino do Salário</h2>
     </div>
-    <canvas id="chart-canvas" height="300"></canvas>
-    <div class="chart-legend" id="chart-legend"></div>
+    <div style="max-width:420px;margin:0 auto">
+      <canvas id="chart-canvas" height="300"></canvas>
+    </div>
+  </div>
+
+  <div class="card mt16">
+    <div class="sec-header" style="margin-bottom:12px">
+      <h2 style="font-size:.95rem">Projeção de Previdências (10/20/30 anos)</h2>
+    </div>
+    <canvas id="chart-previdencias" height="220"></canvas>
+  </div>
+
+  <div class="card mt16">
+    <div class="sec-header" style="margin-bottom:12px">
+      <h2 style="font-size:.95rem">Projeção de Quitação de Dívidas Grandes</h2>
+    </div>
+    <canvas id="chart-dividas" height="220"></canvas>
   </div>
 </div>
 
@@ -212,7 +227,7 @@
   <div class="sec-header">
     <h2>📋 Contas Mensais</h2>
     <button class="btn btn-primary btn-sm" onclick="openAddContaModal('fixa')">+ Fixa</button>
-    <button class="btn btn-outline btn-sm" onclick="openAddContaModal('variavel')">+ Variável</button>
+    <button class="btn btn-outline btn-sm" onclick="openAddContaModal('variavel')">+ Cartão</button>
   </div>
 
   <div class="grid3">
@@ -221,7 +236,7 @@
       <div class="card-value red" id="total-fixas">R$ 0,00</div>
     </div>
     <div class="card">
-      <div class="card-title">Total Variáveis</div>
+      <div class="card-title">Total Cartões</div>
       <div class="card-value red" id="total-variaveis">R$ 0,00</div>
     </div>
     <div class="card">
@@ -234,18 +249,18 @@
     <div class="sec-header"><h2 style="font-size:.95rem">🔒 Contas Fixas</h2></div>
     <div class="tbl-wrap">
       <table id="tbl-fixas">
-        <thead><tr><th>Nome</th><th>Valor (R$)</th><th></th></tr></thead>
+        <thead><tr><th>Nome</th><th>Valor (R$)</th><th>Status</th><th></th></tr></thead>
         <tbody></tbody>
-        <tfoot><tr><td colspan="3"></td></tr></tfoot>
+        <tfoot><tr><td colspan="4"></td></tr></tfoot>
       </table>
     </div>
   </div>
 
   <div class="card mt16">
-    <div class="sec-header"><h2 style="font-size:.95rem">🔄 Contas Variáveis</h2></div>
+    <div class="sec-header"><h2 style="font-size:.95rem">💳 Contas Variáveis (Cartões)</h2></div>
     <div class="tbl-wrap">
       <table id="tbl-variaveis">
-        <thead><tr><th>Nome</th><th>Valor (R$)</th><th></th></tr></thead>
+        <thead><tr><th>Cartão</th><th>Valor Total (R$)</th><th>Status</th><th></th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -332,11 +347,15 @@
   </div>
 </div>
 
-<!-- ==================== RELATÓRIO ==================== -->
+<!-- ==================== RELATÓRIO / EXPORTAR ==================== -->
 <div class="section" id="section-relatorio">
   <div class="sec-header">
     <h2>📄 Relatório — <span id="rel-month-label"></span></h2>
     <button class="btn btn-primary" onclick="exportPDF()">⬇️ Exportar PDF</button>
+    <button class="btn btn-outline" onclick="exportJSON()">💾 Exportar JSON</button>
+    <button class="btn btn-outline" onclick="document.getElementById('inp-json-file').click()">📂 Carregar JSON</button>
+    <input type="file" id="inp-json-file" accept="application/json" style="display:none" onchange="importJSON(event)">
+    <button class="btn btn-success" onclick="saveLocal()">🗄️ Salvar Localmente</button>
   </div>
   <div id="relatorio-content"></div>
 </div>
@@ -373,6 +392,13 @@
     <div class="form-group mt8">
       <label>Valor (R$)</label>
       <input type="number" id="inp-conta-valor" min="0" step="0.01" placeholder="0,00">
+    </div>
+    <div class="form-group mt8">
+      <label>Status</label>
+      <select id="inp-conta-status">
+        <option value="ok">OK</option>
+        <option value="pendente">Pendente</option>
+      </select>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-add-conta')">Cancelar</button>
@@ -550,6 +576,11 @@
   </div>
 </div>
 
+<!-- ==================== LIBRARIES (Chart.js + jsPDF) ==================== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@5.0.8/dist/jspdf.plugin.autotable.min.js"></script>
+
 <!-- ==================== JAVASCRIPT ==================== -->
 <script>
 // ─── State ───────────────────────────────────────────────
@@ -561,35 +592,43 @@ function monthKey(m, y) { return `${y}-${String(m).padStart(2,'0')}`; }
 
 function defaultData() {
   return {
-    salary: 0,
+    salary: 11411.00,
     contas: {
       fixas: [
-        {id:uid(), nome:'Financiamento', valor:0},
-        {id:uid(), nome:'Previdência (R)', valor:0},
-        {id:uid(), nome:'Dízimo', valor:0},
-        {id:uid(), nome:'Condomínio', valor:0},
-        {id:uid(), nome:'Energia', valor:0},
-        {id:uid(), nome:'Internet', valor:0},
-        {id:uid(), nome:'Carro', valor:0},
-        {id:uid(), nome:'Seguro', valor:0},
-        {id:uid(), nome:'Premiere', valor:0},
-        {id:uid(), nome:'Previdência (G)', valor:0},
+        {id:uid(), nome:'Financiamento (seguro)', valor:0, status:'pendente'},
+        {id:uid(), nome:'Previdência (R)', valor:0, status:'pendente'},
+        {id:uid(), nome:'Dízimo', valor:0, status:'pendente'},
+        {id:uid(), nome:'Presentes', valor:0, status:'pendente'},
+        {id:uid(), nome:'Viagem mensal', valor:0, status:'pendente'},
+        {id:uid(), nome:'Seguro Residencial', valor:0, status:'pendente'},
+        {id:uid(), nome:'Energia', valor:0, status:'pendente'},
+        {id:uid(), nome:'Água', valor:0, status:'pendente'},
+        {id:uid(), nome:'Condomínio', valor:0, status:'pendente'},
+        {id:uid(), nome:'Internet', valor:0, status:'pendente'},
+        {id:uid(), nome:'Carro', valor:0, status:'pendente'},
+        {id:uid(), nome:'Seguro Carro', valor:0, status:'pendente'},
+        {id:uid(), nome:'IPTV', valor:0, status:'pendente'},
+        {id:uid(), nome:'Previdência (G)', valor:0, status:'pendente'},
+        {id:uid(), nome:'Inglês', valor:0, status:'pendente'},
+        {id:uid(), nome:'Faculdade', valor:0, status:'pendente'},
+        {id:uid(), nome:'Convênio', valor:0, status:'pendente'},
       ],
       variaveis: [
-        {id:uid(), nome:'Lanches', valor:0},
-        {id:uid(), nome:'Gasolina', valor:0},
-        {id:uid(), nome:'Academia', valor:0},
-        {id:uid(), nome:'Farmácia', valor:0},
-        {id:uid(), nome:'Churrasco', valor:0},
-        {id:uid(), nome:'Belinha', valor:0},
-        {id:uid(), nome:'Ademais', valor:0},
-        {id:uid(), nome:'Nosso Dinheiro (Rebeca)', valor:200},
-        {id:uid(), nome:'Nosso Dinheiro (Gustavo)', valor:200},
+        {id:uid(), nome:'Nubank', valor:0, status:'pendente'},
+        {id:uid(), nome:'Santander (Elite)', valor:0, status:'pendente'},
       ]
     },
     poupancas: [
-      {id:uid(), nome:'Poupança Itaú', codigo:'', saldo:0, saldoAnt:0},
+      {id:uid(), nome:'Poupança NU', codigo:'', saldo:0, saldoAnt:0},
+      {id:uid(), nome:'Bitcoin', codigo:'', saldo:0, saldoAnt:0},
       {id:uid(), nome:'Dinheiro Gu', codigo:'', saldo:0, saldoAnt:0},
+      {id:uid(), nome:'Viagem Mensal', codigo:'', saldo:0, saldoAnt:0},
+      {id:uid(), nome:'Viagem NU REBECA', codigo:'', saldo:0, saldoAnt:0},
+      {id:uid(), nome:'Acerto', codigo:'', saldo:0, saldoAnt:0},
+      {id:uid(), nome:'Previdência Gu', codigo:'', saldo:0, saldoAnt:0},
+      {id:uid(), nome:'Dinheiro Guardado', codigo:'', saldo:0, saldoAnt:0},
+      {id:uid(), nome:'Restituição Imposto', codigo:'', saldo:0, saldoAnt:0},
+      {id:uid(), nome:'Reserva Imediata', codigo:'', saldo:0, saldoAnt:0},
     ],
     presentes: [
       {id:uid(), nome:'Presentes', codigo:'178.8', saldo:0, saldoAnt:0},
@@ -636,7 +675,7 @@ function showSection(name) {
   document.getElementById('section-' + name).classList.add('active');
   event.currentTarget.classList.add('active');
   if (name === 'relatorio') renderRelatorio();
-  if (name === 'dashboard') renderChart();
+  if (name === 'dashboard') { renderChart(); renderPrevidenciaChart(); renderDividasChart(); }
 }
 
 function changeMonth() {
@@ -689,6 +728,8 @@ function refreshAll() {
 
   renderDashCards();
   renderChart();
+  renderPrevidenciaChart();
+  renderDividasChart();
   renderContas();
   renderInvestimentos();
   renderDividas();
@@ -721,10 +762,11 @@ function calcTotals() {
   const variaveis= data.contas.variaveis.reduce((a,c)=>a+(+c.valor||0),0);
   const prev     = data.previdencias.reduce((a,p)=>a+(+p.aporte||0),0);
   const viagens  = data.viagens.reduce((a,v)=>a+(+v.saldo||0),0);
+  const presentes= data.presentes.reduce((a,p)=>a+(+p.saldo||0),0);
   const divParcela= data.dividas.reduce((a,d)=>a+(+d.parcela||0),0);
   const totalDesp = fixas + variaveis;
   const saldo     = (data.salary||0) - totalDesp;
-  return {fixas, variaveis, prev, viagens, divParcela, totalDesp, saldo};
+  return {fixas, variaveis, prev, viagens, presentes, divParcela, totalDesp, saldo};
 }
 
 function renderDashCards() {
@@ -761,54 +803,159 @@ function renderDashCards() {
   `;
 }
 
-// ─── Chart (pure canvas) ─────────────────────────────────
+// ─── Charts (Chart.js) ───────────────────────────────────
 const CHART_COLORS = ['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d'];
+let salaryChart = null;
+let previdenciaChart = null;
+let dividasChart = null;
 
 function renderChart() {
   const t = calcTotals();
   const categories = [
-    {label:'Contas Fixas',  value: t.fixas},
-    {label:'Contas Variáveis', value: t.variaveis},
-    {label:'Previdências',  value: t.prev},
-    {label:'Viagens (saldo)', value: t.viagens},
-    {label:'Saldo Livre',   value: Math.max(0, t.saldo)},
+    {label:'Contas Fixas',      value: t.fixas},
+    {label:'Contas Variáveis',  value: t.variaveis},
+    {label:'Investimentos',     value: t.prev},
+    {label:'Viagens',           value: t.viagens},
+    {label:'Presentes',         value: t.presentes},
   ].filter(c => c.value > 0);
 
   const canvas = document.getElementById('chart-canvas');
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width = 400, H = canvas.height = 300;
-  const cx = W/2, cy = H/2, r = Math.min(W,H)*0.38;
-  ctx.clearRect(0,0,W,H);
+  if (!canvas) return;
 
-  const total = categories.reduce((a,c)=>a+c.value,0);
-  if (total === 0) {
-    ctx.fillStyle = '#94a3b8'; ctx.font = '14px sans-serif';
-    ctx.textAlign = 'center'; ctx.fillText('Sem dados', cx, cy);
-    document.getElementById('chart-legend').innerHTML = '';
+  if (categories.length === 0) {
+    if (salaryChart) { salaryChart.destroy(); salaryChart = null; }
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
     return;
   }
 
-  let angle = -Math.PI/2;
-  categories.forEach((cat, i) => {
-    const slice = (cat.value / total) * 2 * Math.PI;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, r, angle, angle + slice);
-    ctx.closePath();
-    ctx.fillStyle = CHART_COLORS[i % CHART_COLORS.length];
-    ctx.fill();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-    angle += slice;
+  const chartData = {
+    labels: categories.map(c => c.label),
+    datasets: [{
+      data: categories.map(c => c.value),
+      backgroundColor: CHART_COLORS.slice(0, categories.length),
+      borderColor: '#fff',
+      borderWidth: 2,
+    }]
+  };
+
+  if (salaryChart) {
+    salaryChart.data = chartData;
+    salaryChart.update();
+  } else {
+    salaryChart = new Chart(canvas.getContext('2d'), {
+      type: 'doughnut',
+      data: chartData,
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.label}: ${fmt(ctx.parsed)}`
+            }
+          }
+        }
+      }
+    });
+  }
+}
+
+function renderPrevidenciaChart() {
+  const canvas = document.getElementById('chart-previdencias');
+  if (!canvas) return;
+
+  const labels = ['Atual', '+10 anos', '+20 anos', '+30 anos'];
+  const datasets = data.previdencias.map((p, i) => {
+    const aporte = +p.aporte||0;
+    const saldo  = +p.saldo||0;
+    return {
+      label: p.nome,
+      data: [saldo, saldo + aporte*12*10, saldo + aporte*12*20, saldo + aporte*12*30],
+      borderColor: CHART_COLORS[i % CHART_COLORS.length],
+      backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
+      tension: .3,
+      fill: false,
+    };
   });
 
-  // legend
-  const legend = document.getElementById('chart-legend');
-  legend.innerHTML = categories.map((c,i) => `
-    <div class="chart-legend-item">
-      <div class="chart-legend-color" style="background:${CHART_COLORS[i%CHART_COLORS.length]}"></div>
-      <span>${c.label}: ${fmt(c.value)} (${((c.value/total)*100).toFixed(1)}%)</span>
-    </div>
-  `).join('');
+  const chartData = { labels, datasets };
+
+  if (previdenciaChart) {
+    previdenciaChart.data = chartData;
+    previdenciaChart.update();
+  } else {
+    previdenciaChart = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: chartData,
+      options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true, ticks: { callback: v => fmt(v) } } },
+        plugins: {
+          tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${fmt(ctx.parsed.y)}` } }
+        }
+      }
+    });
+  }
+}
+
+function renderDividasChart() {
+  const canvas = document.getElementById('chart-dividas');
+  if (!canvas) return;
+
+  if (!data.dividas.length) {
+    if (dividasChart) { dividasChart.destroy(); dividasChart = null; }
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    return;
+  }
+
+  // Build a monthly schedule until all debts are paid off
+  const maxMonths = data.dividas.reduce((max,d) => {
+    const parcela = +d.parcela||0;
+    const saldo   = +d.saldo||0;
+    const meses   = parcela > 0 ? Math.ceil(saldo/parcela) : (+d.parcelas||0);
+    return Math.max(max, meses);
+  }, 0);
+
+  const labels = [];
+  const totals = [];
+  let running = data.dividas.reduce((a,d)=>a+(+d.saldo||0),0);
+  const totalParcela = data.dividas.reduce((a,d)=>a+(+d.parcela||0),0);
+  labels.push(monthName(new Date()));
+  totals.push(running);
+  for (let m = 1; m <= maxMonths; m++) {
+    running = Math.max(0, running - totalParcela);
+    labels.push(monthName(addMonths(new Date(), m)));
+    totals.push(running);
+  }
+
+  const chartData = {
+    labels,
+    datasets: [{
+      label: 'Saldo devedor total',
+      data: totals,
+      backgroundColor: '#dc2626',
+    }]
+  };
+
+  if (dividasChart) {
+    dividasChart.data = chartData;
+    dividasChart.update();
+  } else {
+    dividasChart = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: chartData,
+      options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true, ticks: { callback: v => fmt(v) } } },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (ctx) => fmt(ctx.parsed.y) } }
+        }
+      }
+    });
+  }
 }
 
 // ─── Contas ──────────────────────────────────────────────
@@ -835,6 +982,12 @@ function renderContaTable(tableId, list, type) {
           onchange="updateContaValor('${c.id}','${type}',this.value)">
       </td>
       <td>
+        <span class="${c.status === 'ok' ? 'badge-ok' : 'badge-warn'}" style="cursor:pointer"
+          title="Clique para alternar o status" onclick="toggleContaStatus('${c.id}','${type}')">
+          ${c.status === 'ok' ? 'OK' : 'Pendente'}
+        </span>
+      </td>
+      <td>
         <button class="btn-icon" title="Editar" onclick="openEditContaModal('${c.id}','${type}')">✏️</button>
         <button class="btn-icon" title="Remover" onclick="removeConta('${c.id}','${type}')">🗑️</button>
       </td>
@@ -848,12 +1001,19 @@ function updateContaValor(id, type, val) {
   if (item) { item.valor = parseFloat(val)||0; save(); }
 }
 
+function toggleContaStatus(id, type) {
+  const list = type === 'fixa' ? data.contas.fixas : data.contas.variaveis;
+  const item = list.find(c => c.id === id);
+  if (item) { item.status = item.status === 'ok' ? 'pendente' : 'ok'; save(); }
+}
+
 function openAddContaModal(type) {
-  document.getElementById('modal-conta-title').textContent = type === 'fixa' ? '+ Conta Fixa' : '+ Conta Variável';
+  document.getElementById('modal-conta-title').textContent = type === 'fixa' ? '+ Conta Fixa' : '+ Cartão';
   document.getElementById('inp-conta-type').value = type;
   document.getElementById('inp-conta-edit-id').value = '';
   document.getElementById('inp-conta-nome').value = '';
   document.getElementById('inp-conta-valor').value = '';
+  document.getElementById('inp-conta-status').value = 'pendente';
   openModal('modal-add-conta');
 }
 
@@ -866,6 +1026,7 @@ function openEditContaModal(id, type) {
   document.getElementById('inp-conta-edit-id').value = id;
   document.getElementById('inp-conta-nome').value = item.nome;
   document.getElementById('inp-conta-valor').value = item.valor;
+  document.getElementById('inp-conta-status').value = item.status || 'pendente';
   openModal('modal-add-conta');
 }
 
@@ -874,13 +1035,14 @@ function saveConta() {
   const editId = document.getElementById('inp-conta-edit-id').value;
   const nome   = document.getElementById('inp-conta-nome').value.trim();
   const valor  = parseFloat(document.getElementById('inp-conta-valor').value)||0;
+  const status = document.getElementById('inp-conta-status').value;
   if (!nome) return alert('Informe o nome da conta.');
   const list = type === 'fixa' ? data.contas.fixas : data.contas.variaveis;
   if (editId) {
     const item = list.find(c => c.id === editId);
-    if (item) { item.nome = nome; item.valor = valor; }
+    if (item) { item.nome = nome; item.valor = valor; item.status = status; }
   } else {
-    list.push({id:uid(), nome, valor});
+    list.push({id:uid(), nome, valor, status});
   }
   closeModal('modal-add-conta');
   save();
@@ -1335,28 +1497,133 @@ function renderRelatorio() {
 }
 
 function exportPDF() {
-  renderRelatorio();
-  const printContent = document.getElementById('print-area').innerHTML;
+  const t = calcTotals();
   const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                   'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  const label = `${months[currentMonth-1]}_${currentYear}`;
-  const win = window.open('','_blank');
-  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head>
-    <meta charset="UTF-8">
-    <title>Controle Financeiro — ${label}</title>
-    <style>
-      body { font-family: 'Segoe UI', sans-serif; color: #1e293b; max-width: 800px; margin: 20px auto; padding: 0 16px; }
-      .card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-      table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-      th { text-align: left; padding: 4px 0; color: #64748b; }
-      td { padding: 4px 0; }
-      .text-right { text-align: right; }
-      h3 { font-size: 1rem; margin-bottom: 10px; }
-      @media print { body { margin: 0; } }
-    </style>
-  </head><body>${printContent}</body></html>`);
-  win.document.close();
-  setTimeout(() => { win.print(); }, 400);
+  const label = `${months[currentMonth-1]} / ${currentYear}`;
+  const fileLabel = `${months[currentMonth-1]}_${currentYear}`;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 16;
+
+  doc.setFontSize(16);
+  doc.text(`Controle Financeiro Pessoal — ${label}`, 14, y);
+  y += 10;
+
+  doc.setFontSize(11);
+  doc.autoTable({
+    startY: y,
+    head: [['Resumo Mensal', 'Valor']],
+    body: [
+      ['Salário Líquido', fmt(data.salary)],
+      ['Contas Fixas', '- ' + fmt(t.fixas)],
+      ['Contas Variáveis (Cartões)', '- ' + fmt(t.variaveis)],
+      ['Saldo Final', fmt(t.saldo)],
+    ],
+  });
+  y = doc.lastAutoTable.finalY + 8;
+
+  doc.autoTable({
+    startY: y,
+    head: [['Contas Fixas', 'Valor', 'Status']],
+    body: data.contas.fixas.map(c => [c.nome, fmt(c.valor), c.status === 'ok' ? 'OK' : 'Pendente']),
+  });
+  y = doc.lastAutoTable.finalY + 8;
+
+  doc.autoTable({
+    startY: y,
+    head: [['Cartões (Contas Variáveis)', 'Valor Total', 'Status']],
+    body: data.contas.variaveis.map(c => [c.nome, fmt(c.valor), c.status === 'ok' ? 'OK' : 'Pendente']),
+  });
+  y = doc.lastAutoTable.finalY + 8;
+
+  doc.autoTable({
+    startY: y,
+    head: [['Previdência', 'Aporte Mensal', 'Saldo Atual', '+10 anos', '+20 anos', '+30 anos']],
+    body: data.previdencias.map(p => {
+      const aporte = +p.aporte||0, saldo = +p.saldo||0;
+      return [p.nome, fmt(aporte), fmt(saldo), fmt(saldo+aporte*12*10), fmt(saldo+aporte*12*20), fmt(saldo+aporte*12*30)];
+    }),
+  });
+  y = doc.lastAutoTable.finalY + 8;
+
+  const poupancasRows = [...data.poupancas, ...data.presentes, ...data.viagens]
+    .map(p => [p.nome, p.codigo||'—', fmt(p.saldo), fmt(p.saldoAnt)]);
+  if (poupancasRows.length) {
+    doc.autoTable({
+      startY: y,
+      head: [['Investimentos/Poupanças', 'Código', 'Saldo Atual', 'Mês Anterior']],
+      body: poupancasRows,
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  if (data.dividas.length) {
+    doc.autoTable({
+      startY: y,
+      head: [['Dívida', 'Saldo', 'Parcela', 'Quitação Estimada']],
+      body: data.dividas.map(d => {
+        const m = d.parcela > 0 ? Math.ceil(d.saldo/d.parcela) : d.parcelas;
+        return [d.nome, fmt(d.saldo), fmt(d.parcela), monthName(addMonths(new Date(), m))];
+      }),
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  if (data.movimentacoes.length) {
+    doc.autoTable({
+      startY: y,
+      head: [['Data', 'Origem', 'Destino/Motivo', 'Valor', 'Status']],
+      body: data.movimentacoes.map(m => [m.data, m.origem, m.destino, fmt(m.valor), m.devolvido ? 'Devolvido' : 'Pendente']),
+    });
+  }
+
+  doc.save(`controle-financeiro_${fileLabel}.pdf`);
+}
+
+// ─── Exportar / Carregar JSON ────────────────────────────
+function exportJSON() {
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const fileLabel = `${months[currentMonth-1]}_${currentYear}`;
+  const payload = { month: currentMonth, year: currentYear, data };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `controle-financeiro_${fileLabel}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      const imported = parsed && parsed.data ? parsed.data : parsed;
+      if (!imported || typeof imported !== 'object') throw new Error('Formato inválido');
+      data = Object.assign(defaultData(), imported);
+      setData(currentMonth, currentYear, data);
+      refreshAll();
+      alert('Dados carregados com sucesso! Revise e ajuste os valores conforme necessário.');
+    } catch (err) {
+      alert('Não foi possível ler o arquivo JSON. Verifique se o arquivo é válido.');
+    } finally {
+      event.target.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function saveLocal() {
+  save();
+  alert('Dados salvos localmente neste navegador!');
 }
 
 // ─── Salary Modal ────────────────────────────────────────
