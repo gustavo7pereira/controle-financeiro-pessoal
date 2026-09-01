@@ -183,7 +183,6 @@
       <option value="11">Nov</option><option value="12">Dez</option>
     </select>
     <input type="number" id="sel-year" min="2020" max="2099" style="width:72px" onchange="changeMonth()">
-    <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3)" onclick="loadPreviousMonth()">↩ Mês ant.</button>
   </div>
 </nav>
 
@@ -668,6 +667,18 @@ let data = getData(currentMonth, currentYear);
 
 function save() { setData(currentMonth, currentYear, data); refreshAll(); }
 
+// Debounce: avoid saving/re-rendering on every single keystroke while the user is
+// still typing, but guarantee the data is persisted and the dashboard refreshed
+// automatically a moment after the last edit (no need to blur/F5/change tabs).
+function debounce(fn, delay) {
+  let timer;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+const debouncedSave = debounce(save, 400);
+
 // ─── Navigation ──────────────────────────────────────────
 function showSection(name) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -675,7 +686,7 @@ function showSection(name) {
   document.getElementById('section-' + name).classList.add('active');
   event.currentTarget.classList.add('active');
   if (name === 'relatorio') renderRelatorio();
-  if (name === 'dashboard') { renderChart(); renderPrevidenciaChart(); renderDividasChart(); }
+  if (name === 'dashboard') { renderDashCards(); renderChart(); renderPrevidenciaChart(); renderDividasChart(); }
 }
 
 function changeMonth() {
@@ -683,37 +694,6 @@ function changeMonth() {
   currentYear  = parseInt(document.getElementById('sel-year').value);
   data = getData(currentMonth, currentYear);
   refreshAll();
-}
-
-function loadPreviousMonth() {
-  let pm = currentMonth - 1, py = currentYear;
-  if (pm < 1) { pm = 12; py--; }
-  const prev = getData(pm, py);
-  // Copy structure (names+values for fixed/variable), reset investment balances
-  const cur = getData(currentMonth, currentYear);
-  cur.salary = prev.salary;
-  cur.contas = JSON.parse(JSON.stringify(prev.contas));
-  // Give new IDs to avoid collisions
-  cur.contas.fixas.forEach(c => c.id = uid());
-  cur.contas.variaveis.forEach(c => c.id = uid());
-  // Copy poupancas/viagens/presentes/previdencias structure, shift saldoAnt
-  ['poupancas','viagens','presentes'].forEach(cat => {
-    cur[cat] = JSON.parse(JSON.stringify(prev[cat]));
-    cur[cat].forEach(p => { p.id = uid(); p.saldoAnt = p.saldo; });
-  });
-  cur.previdencias = JSON.parse(JSON.stringify(prev.previdencias));
-  cur.previdencias.forEach(p => { p.id = uid(); p.saldo = p.saldo + p.aporte; });
-  cur.dividas = JSON.parse(JSON.stringify(prev.dividas));
-  cur.dividas.forEach(d => {
-    d.id = uid();
-    d.saldo = Math.max(0, d.saldo - d.parcela);
-    d.parcelas = Math.max(0, d.parcelas - 1);
-  });
-  cur.movimentacoes = JSON.parse(JSON.stringify(prev.movimentacoes));
-  data = cur;
-  setData(currentMonth, currentYear, data);
-  refreshAll();
-  alert('Estrutura do mês anterior carregada! Revise e ajuste os valores.');
 }
 
 // ─── Refresh ─────────────────────────────────────────────
@@ -977,9 +957,9 @@ function renderContaTable(tableId, list, type) {
   tbody.innerHTML = list.map(c => `
     <tr>
       <td>${c.nome}</td>
-      <td>
-        <input type="number" class="inp-sm" value="${c.valor||0}" step="0.01"
-          onchange="updateContaValor('${c.id}','${type}',this.value)">
+      <td onclick="this.querySelector('input').focus()">
+        <input type="number" class="inp-sm" value="${c.valor||0}" min="0" step="0.01"
+          oninput="updateContaValor('${c.id}','${type}',this.value)">
       </td>
       <td>
         <span class="${c.status === 'ok' ? 'badge-ok' : 'badge-warn'}" style="cursor:pointer"
@@ -998,7 +978,7 @@ function renderContaTable(tableId, list, type) {
 function updateContaValor(id, type, val) {
   const list = type === 'fixa' ? data.contas.fixas : data.contas.variaveis;
   const item = list.find(c => c.id === id);
-  if (item) { item.valor = parseFloat(val)||0; save(); }
+  if (item) { item.valor = Math.max(0, parseFloat(val)||0); debouncedSave(); }
 }
 
 function toggleContaStatus(id, type) {
@@ -1034,7 +1014,7 @@ function saveConta() {
   const type   = document.getElementById('inp-conta-type').value;
   const editId = document.getElementById('inp-conta-edit-id').value;
   const nome   = document.getElementById('inp-conta-nome').value.trim();
-  const valor  = parseFloat(document.getElementById('inp-conta-valor').value)||0;
+  const valor  = Math.max(0, parseFloat(document.getElementById('inp-conta-valor').value)||0);
   const status = document.getElementById('inp-conta-status').value;
   if (!nome) return alert('Informe o nome da conta.');
   const list = type === 'fixa' ? data.contas.fixas : data.contas.variaveis;
@@ -1069,8 +1049,14 @@ function renderPoupancaTable(tableId, list, editType) {
     <tr>
       <td>${p.nome}</td>
       <td><span class="text-muted">${p.codigo||'—'}</span></td>
-      <td>${fmt(p.saldo)}</td>
-      <td>${fmt(p.saldoAnt)}</td>
+      <td onclick="this.querySelector('input').focus()">
+        <input type="number" class="inp-sm" value="${p.saldo===''||p.saldo===null||p.saldo===undefined?'':p.saldo}" min="0" step="0.01"
+          placeholder="0,00" oninput="updatePoupancaField('${p.id}','${editType}','saldo',this.value)">
+      </td>
+      <td onclick="this.querySelector('input').focus()">
+        <input type="number" class="inp-sm" value="${p.saldoAnt===''||p.saldoAnt===null||p.saldoAnt===undefined?'':p.saldoAnt}" min="0" step="0.01"
+          placeholder="0,00" oninput="updatePoupancaField('${p.id}','${editType}','saldoAnt',this.value)">
+      </td>
       <td>${fmtDiff(p.saldo, p.saldoAnt)}</td>
       <td>
         <button class="btn-icon" onclick="openEditPoupancaModal('${p.id}','${editType}')">✏️</button>
@@ -1078,6 +1064,14 @@ function renderPoupancaTable(tableId, list, editType) {
       </td>
     </tr>
   `).join('') || '<tr><td colspan="6" class="text-muted" style="text-align:center">Nenhum registro</td></tr>';
+}
+
+function updatePoupancaField(id, editType, field, val) {
+  const list = editType === 'poupanca' ? data.poupancas : editType === 'presente' ? data.presentes : data.viagens;
+  const item = list.find(p => p.id === id);
+  if (!item) return;
+  item[field] = val === '' ? '' : Math.max(0, parseFloat(val)||0);
+  debouncedSave();
 }
 
 function renderPrevidencias() {
@@ -1092,8 +1086,14 @@ function renderPrevidencias() {
     return `
       <tr>
         <td>${p.nome}</td>
-        <td>${fmt(aporte)}/mês</td>
-        <td>${fmt(saldo)}</td>
+        <td onclick="this.querySelector('input').focus()">
+          <input type="number" class="inp-sm" value="${p.aporte||0}" min="0" step="0.01"
+            oninput="updatePrevidenciaField('${p.id}','aporte',this.value)">
+        </td>
+        <td onclick="this.querySelector('input').focus()">
+          <input type="number" class="inp-sm" value="${p.saldo||0}" min="0" step="0.01"
+            oninput="updatePrevidenciaField('${p.id}','saldo',this.value)">
+        </td>
         <td>${fmt(proj10)}</td>
         <td>${fmt(proj20)}</td>
         <td>${fmt(proj30)}</td>
@@ -1103,6 +1103,13 @@ function renderPrevidencias() {
         </td>
       </tr>`;
   }).join('') || '<tr><td colspan="7" class="text-muted" style="text-align:center">Nenhuma previdência</td></tr>';
+}
+
+function updatePrevidenciaField(id, field, val) {
+  const item = data.previdencias.find(p => p.id === id);
+  if (!item) return;
+  item[field] = Math.max(0, parseFloat(val)||0);
+  debouncedSave();
 }
 
 function openAddPoupancaModal() {
@@ -1132,8 +1139,8 @@ function savePoupanca() {
   const editId = document.getElementById('inp-poup-edit-id').value;
   const nome   = document.getElementById('inp-poup-nome').value.trim();
   const codigo = document.getElementById('inp-poup-codigo').value.trim();
-  const saldo  = parseFloat(document.getElementById('inp-poup-saldo').value)||0;
-  const saldoAnt = parseFloat(document.getElementById('inp-poup-saldo-ant').value)||0;
+  const saldo  = Math.max(0, parseFloat(document.getElementById('inp-poup-saldo').value)||0);
+  const saldoAnt = Math.max(0, parseFloat(document.getElementById('inp-poup-saldo-ant').value)||0);
   if (!nome) return alert('Informe o nome.');
   const list = type === 'poupanca' ? data.poupancas : type === 'presente' ? data.presentes : data.viagens;
   if (editId) {
@@ -1164,8 +1171,8 @@ function saveViagem() {
   const editId   = document.getElementById('inp-viag-edit-id').value;
   const nome     = document.getElementById('inp-viag-nome').value.trim();
   const codigo   = document.getElementById('inp-viag-codigo').value.trim();
-  const saldo    = parseFloat(document.getElementById('inp-viag-saldo').value)||0;
-  const saldoAnt = parseFloat(document.getElementById('inp-viag-saldo-ant').value)||0;
+  const saldo    = Math.max(0, parseFloat(document.getElementById('inp-viag-saldo').value)||0);
+  const saldoAnt = Math.max(0, parseFloat(document.getElementById('inp-viag-saldo-ant').value)||0);
   if (!nome) return alert('Informe o nome.');
   if (editId) {
     const item = data.viagens.find(v => v.id === editId);
@@ -1188,8 +1195,8 @@ function savePresente() {
   const editId   = document.getElementById('inp-pres-edit-id').value;
   const nome     = document.getElementById('inp-pres-nome').value.trim();
   const codigo   = document.getElementById('inp-pres-codigo').value.trim();
-  const saldo    = parseFloat(document.getElementById('inp-pres-saldo').value)||0;
-  const saldoAnt = parseFloat(document.getElementById('inp-pres-saldo-ant').value)||0;
+  const saldo    = Math.max(0, parseFloat(document.getElementById('inp-pres-saldo').value)||0);
+  const saldoAnt = Math.max(0, parseFloat(document.getElementById('inp-pres-saldo-ant').value)||0);
   if (!nome) return alert('Informe o nome.');
   if (editId) {
     const item = data.presentes.find(p => p.id === editId);
@@ -1222,8 +1229,8 @@ function openEditPrevidenciaModal(id) {
 function savePrevidencia() {
   const editId = document.getElementById('inp-prev-edit-id').value;
   const nome   = document.getElementById('inp-prev-nome').value.trim();
-  const aporte = parseFloat(document.getElementById('inp-prev-aporte').value)||0;
-  const saldo  = parseFloat(document.getElementById('inp-prev-saldo').value)||0;
+  const aporte = Math.max(0, parseFloat(document.getElementById('inp-prev-aporte').value)||0);
+  const saldo  = Math.max(0, parseFloat(document.getElementById('inp-prev-saldo').value)||0);
   if (!nome) return alert('Informe o nome.');
   if (editId) {
     const item = data.previdencias.find(p => p.id === editId);
@@ -1317,9 +1324,9 @@ function openEditDividaModal(id) {
 function saveDivida() {
   const editId  = document.getElementById('inp-div-edit-id').value;
   const nome    = document.getElementById('inp-div-nome').value.trim();
-  const saldo   = parseFloat(document.getElementById('inp-div-saldo').value)||0;
-  const parcela = parseFloat(document.getElementById('inp-div-parcela').value)||0;
-  const parcelas= parseInt(document.getElementById('inp-div-parcelas').value)||0;
+  const saldo   = Math.max(0, parseFloat(document.getElementById('inp-div-saldo').value)||0);
+  const parcela = Math.max(0, parseFloat(document.getElementById('inp-div-parcela').value)||0);
+  const parcelas= Math.max(0, parseInt(document.getElementById('inp-div-parcelas').value)||0);
   if (!nome) return alert('Informe o nome da dívida.');
   if (editId) {
     const item = data.dividas.find(d => d.id === editId);
@@ -1388,7 +1395,7 @@ function saveMov() {
   const data_    = document.getElementById('inp-mov-data').value;
   const origem   = document.getElementById('inp-mov-origem').value.trim();
   const destino  = document.getElementById('inp-mov-destino').value.trim();
-  const valor    = parseFloat(document.getElementById('inp-mov-valor').value)||0;
+  const valor    = Math.max(0, parseFloat(document.getElementById('inp-mov-valor').value)||0);
   const devolucao= document.getElementById('inp-mov-devolucao').value;
   if (!origem || !destino) return alert('Preencha origem e destino.');
   if (editId) {
@@ -1608,10 +1615,35 @@ function importJSON(event) {
       const parsed = JSON.parse(e.target.result);
       const imported = parsed && parsed.data ? parsed.data : parsed;
       if (!imported || typeof imported !== 'object') throw new Error('Formato inválido');
-      data = Object.assign(defaultData(), imported);
+
+      const merged = Object.assign(defaultData(), imported);
+
+      // Saldo Anterior: o arquivo importado representa o MÊS ANTERIOR.
+      // Poupanças/Viagens/Presentes: o "saldo" anterior vira "saldoAnt" e o
+      // "saldo" atual fica em branco para o usuário preencher manualmente.
+      ['poupancas','viagens','presentes'].forEach(cat => {
+        merged[cat] = (merged[cat]||[]).map(item => ({
+          ...item,
+          saldoAnt: Math.max(0, parseFloat(item.saldo)||0),
+          saldo: ''
+        }));
+      });
+      // Previdências: o "saldo" anterior é mantido como saldo atual; o usuário
+      // pode atualizá-lo conforme o extrato mais recente.
+      merged.previdencias = (merged.previdencias||[]).map(item => ({...item}));
+
+      data = merged;
       setData(currentMonth, currentYear, data);
       refreshAll();
-      alert('Dados carregados com sucesso! Revise e ajuste os valores conforme necessário.');
+
+      const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                       'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+      const importedLabel = (parsed && parsed.month && parsed.year)
+        ? `${months[parsed.month-1]}/${parsed.year}`
+        : 'mês anterior';
+      alert(`Dados de ${importedLabel} importados com sucesso!\n\n` +
+        '• Poupanças/Viagens/Presentes: o saldo importado virou "Mês Ant." — preencha o novo "Saldo Atual".\n' +
+        '• Previdências: o saldo importado foi carregado como saldo atual — atualize se necessário.');
     } catch (err) {
       alert('Não foi possível ler o arquivo JSON. Verifique se o arquivo é válido.');
     } finally {
@@ -1633,7 +1665,7 @@ function openSalaryModal() {
 }
 
 function saveSalary() {
-  data.salary = parseFloat(document.getElementById('inp-salary').value)||0;
+  data.salary = Math.max(0, parseFloat(document.getElementById('inp-salary').value)||0);
   closeModal('modal-salary');
   save();
 }
