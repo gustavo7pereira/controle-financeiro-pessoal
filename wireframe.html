@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wireframe - Controle Financeiro Pessoal</title>
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --panel: #ffffff;
+      --line: #2f3542;
+      --soft-line: #8b95a7;
+      --soft-fill: #eef1f5;
+      --label: #5b6472;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--line);
+    }
+
+    .page {
+      width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .wireframe {
+      background: linear-gradient(180deg, #fcfcfd 0%, #f8f9fb 100%);
+      border: 3px solid var(--line);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 16px 48px rgba(27, 31, 41, 0.12);
+    }
+
+    .header,
+    .footer {
+      background: var(--panel);
+      padding: 20px 24px;
+      border-bottom: 3px solid var(--line);
+    }
+
+    .footer {
+      border-top: 3px solid var(--line);
+      border-bottom: 0;
+    }
+
+    .header-top,
+    .footer-actions,
+    .stats {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .title-box {
+      min-width: 300px;
+      padding: 14px 18px;
+      border: 2px solid var(--line);
+      border-radius: 16px;
+      background: var(--soft-fill);
+      font-size: 28px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .pill,
+    .action {
+      padding: 10px 16px;
+      border: 2px dashed var(--soft-line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--label);
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .body {
+      padding: 24px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .stats .card {
+      flex: 1 1 0;
+      min-width: 180px;
+      padding: 16px;
+      border: 2px solid var(--soft-line);
+      border-radius: 18px;
+      background: var(--panel);
+    }
+
+    .card strong,
+    .section-title,
+    .chart-title,
+    .subsection-title {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .metric-bar,
+    .line-bar {
+      height: 12px;
+      background: var(--soft-fill);
+      border: 2px solid var(--soft-line);
+      border-radius: 999px;
+      margin-top: 8px;
+    }
+
+    .charts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .chart,
+    .section,
+    .subsection {
+      background: var(--panel);
+      border: 2px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      position: relative;
+    }
+
+    .chart {
+      min-height: 300px;
+    }
+
+    .chart-canvas {
+      height: 220px;
+      border: 2px dashed var(--soft-line);
+      border-radius: 20px;
+      background:
+        linear-gradient(transparent 95%, rgba(139, 149, 167, 0.35) 95%) 0 0 / 100% 25%,
+        linear-gradient(90deg, transparent 95%, rgba(139, 149, 167, 0.35) 95%) 0 0 / 25% 100%,
+        #fafbfd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--label);
+      font-weight: 700;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .donut::before {
+      content: "";
+      width: 150px;
+      height: 150px;
+      border: 24px solid var(--soft-line);
+      border-right-color: #c0c7d3;
+      border-bottom-color: #d7dde6;
+      border-radius: 50%;
+      display: block;
+      background: #fff;
+    }
+
+    .chart-canvas.donut {
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .line-graphic,
+    .bar-graphic {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    .line-graphic svg,
+    .bar-graphic svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 20px;
+    }
+
+    .section-actions {
+      position: absolute;
+      top: 16px;
+      right: 18px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .mini-action {
+      padding: 8px 12px;
+      border: 2px dashed var(--soft-line);
+      border-radius: 12px;
+      color: var(--label);
+      font-size: 12px;
+      font-weight: 700;
+      background: #fff;
+      text-transform: uppercase;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 18px;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      padding: 12px 10px;
+      border: 2px solid #a8b1bf;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--soft-fill);
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 6px 10px;
+      border: 2px solid var(--soft-line);
+      border-radius: 999px;
+      font-size: 11px;
+      color: var(--label);
+      text-transform: uppercase;
+      margin-right: 6px;
+      margin-top: 6px;
+    }
+
+    .investments {
+      display: grid;
+      gap: 16px;
+    }
+
+    .subsection {
+      padding-top: 20px;
+    }
+
+    .upload-note {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border: 2px dashed var(--soft-line);
+      border-radius: 14px;
+      color: var(--label);
+      font-size: 13px;
+      background: #fbfcfe;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="wireframe">
+      <header class="header">
+        <div class="header-top">
+          <div class="title-box">Controle Financeiro Pessoal</div>
+          <div class="pill">Resumo</div>
+          <div class="pill">Contas</div>
+          <div class="pill">Investimentos</div>
+          <div class="pill">Dívidas</div>
+          <div class="pill">Movimentações</div>
+          <div class="pill">Exportar</div>
+        </div>
+      </header>
+
+      <main class="body">
+        <section class="stats">
+          <div class="card">
+            <strong>Salário líquido / receita</strong>
+            <div class="metric-bar"></div>
+            <div class="tag">Entrada principal</div>
+          </div>
+          <div class="card">
+            <strong>Despesas + investimentos</strong>
+            <div class="metric-bar"></div>
+            <div class="tag">Totalizadores</div>
+          </div>
+          <div class="card">
+            <strong>Saldo final do mês</strong>
+            <div class="metric-bar"></div>
+            <div class="tag">Visão rápida</div>
+          </div>
+        </section>
+
+        <section class="charts">
+          <article class="chart">
+            <span class="chart-title">Gráfico donut — distribuição do salário por categoria</span>
+            <div class="chart-canvas donut">
+              <div></div>
+              <span>Contas Fixas · Contas Variáveis · Investimentos · Viagens · Presentes</span>
+            </div>
+          </article>
+          <article class="chart">
+            <span class="chart-title">Gráfico de linha — projeção das previdências R e G</span>
+            <div class="chart-canvas">
+              <div class="line-graphic">
+                <svg viewBox="0 0 360 220" aria-hidden="true">
+                  <polyline points="20,180 120,150 220,110 330,70" fill="none" stroke="#7f8898" stroke-width="5" />
+                  <polyline points="20,190 120,168 220,140 330,118" fill="none" stroke="#bcc4d0" stroke-width="5" stroke-dasharray="10 8" />
+                  <circle cx="20" cy="180" r="6" fill="#7f8898" />
+                  <circle cx="120" cy="150" r="6" fill="#7f8898" />
+                  <circle cx="220" cy="110" r="6" fill="#7f8898" />
+                  <circle cx="330" cy="70" r="6" fill="#7f8898" />
+                  <circle cx="20" cy="190" r="6" fill="#bcc4d0" />
+                  <circle cx="120" cy="168" r="6" fill="#bcc4d0" />
+                  <circle cx="220" cy="140" r="6" fill="#bcc4d0" />
+                  <circle cx="330" cy="118" r="6" fill="#bcc4d0" />
+                  <text x="14" y="210" fill="#5b6472" font-size="13">Hoje</text>
+                  <text x="98" y="210" fill="#5b6472" font-size="13">10 anos</text>
+                  <text x="198" y="210" fill="#5b6472" font-size="13">20 anos</text>
+                  <text x="308" y="210" fill="#5b6472" font-size="13">30 anos</text>
+                  <text x="286" y="54" fill="#5b6472" font-size="13">Previdência R</text>
+                  <text x="255" y="152" fill="#5b6472" font-size="13">Previdência G</text>
+                </svg>
+              </div>
+            </div>
+          </article>
+          <article class="chart">
+            <span class="chart-title">Gráfico de barras — quitação das dívidas grandes</span>
+            <div class="chart-canvas">
+              <div class="bar-graphic">
+                <svg viewBox="0 0 360 220" aria-hidden="true">
+                  <rect x="42" y="110" width="52" height="80" fill="#cbd2dc" stroke="#7f8898" stroke-width="3" />
+                  <rect x="126" y="86" width="52" height="104" fill="#d9dee7" stroke="#7f8898" stroke-width="3" />
+                  <rect x="210" y="60" width="52" height="130" fill="#e5e9f0" stroke="#7f8898" stroke-width="3" />
+                  <rect x="294" y="28" width="52" height="162" fill="#eff2f6" stroke="#7f8898" stroke-width="3" />
+                  <text x="38" y="210" fill="#5b6472" font-size="13">Ano 1</text>
+                  <text x="122" y="210" fill="#5b6472" font-size="13">Ano 2</text>
+                  <text x="206" y="210" fill="#5b6472" font-size="13">Ano 3</text>
+                  <text x="290" y="210" fill="#5b6472" font-size="13">Quitação</text>
+                </svg>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="section-grid">
+          <article class="section">
+            <span class="section-title">Seção de contas fixas</span>
+            <div class="section-actions">
+              <span class="mini-action">+ Adicionar conta</span>
+              <span class="mini-action">Remover conta</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome da conta</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Financiamento</td>
+                  <td>R$ ____</td>
+                  <td><span class="tag">OK</span></td>
+                </tr>
+                <tr>
+                  <td>Condomínio / Energia / Internet</td>
+                  <td>R$ ____</td>
+                  <td><span class="tag">Pendente</span></td>
+                </tr>
+                <tr>
+                  <td>Previdências / Dízimo / Carro</td>
+                  <td>R$ ____</td>
+                  <td><span class="tag">OK</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+
+          <article class="section">
+            <span class="section-title">Seção de contas variáveis (cartões)</span>
+            <div class="section-actions">
+              <span class="mini-action">+ Adicionar cartão</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome do cartão</th>
+                  <th>Valor total de despesas</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Nubank</td>
+                  <td>R$ ____</td>
+                  <td><span class="tag">Aberto</span></td>
+                </tr>
+                <tr>
+                  <td>Santander Elite</td>
+                  <td>R$ ____</td>
+                  <td><span class="tag">Fechado</span></td>
+                </tr>
+                <tr>
+                  <td>Outro cartão</td>
+                  <td>R$ ____</td>
+                  <td><span class="tag">Pendente</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+        </section>
+
+        <section class="section-grid">
+          <article class="section">
+            <span class="section-title">Seção de investimentos</span>
+            <div class="section-actions">
+              <span class="mini-action">+ Adicionar investimento</span>
+            </div>
+            <div class="investments">
+              <section class="subsection">
+                <span class="subsection-title">Subseção: previdências</span>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Aporte mensal</th>
+                      <th>Saldo</th>
+                      <th>Projeção 10/20/30 anos</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Previdência R</td>
+                      <td>R$ ____</td>
+                      <td>R$ ____</td>
+                      <td>10a · 20a · 30a</td>
+                    </tr>
+                    <tr>
+                      <td>Previdência G</td>
+                      <td>R$ ____</td>
+                      <td>R$ ____</td>
+                      <td>10a · 20a · 30a</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </section>
+              <section class="subsection">
+                <span class="subsection-title">Subseção: poupanças</span>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Código</th>
+                      <th>Saldo atual</th>
+                      <th>Saldo mês anterior</th>
+                      <th>Diferença</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Presentes</td>
+                      <td>178.8</td>
+                      <td>R$ ____</td>
+                      <td>R$ ____</td>
+                      <td>+/- R$ ____</td>
+                    </tr>
+                    <tr>
+                      <td>Viagens / Poupanças</td>
+                      <td>____</td>
+                      <td>R$ ____</td>
+                      <td>R$ ____</td>
+                      <td>+/- R$ ____</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </section>
+            </div>
+          </article>
+
+          <article class="section">
+            <span class="section-title">Seção de dívidas grandes</span>
+            <div class="section-actions">
+              <span class="mini-action">+ Adicionar dívida</span>
+              <span class="mini-action">Atualizar saldo / aporte extra</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome da dívida</th>
+                  <th>Saldo total</th>
+                  <th>Parcela mensal</th>
+                  <th>Parcelas restantes</th>
+                  <th>Data quitação</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Financiamento imóvel</td>
+                  <td>R$ ____</td>
+                  <td>R$ ____</td>
+                  <td>___</td>
+                  <td>__/__/____</td>
+                </tr>
+                <tr>
+                  <td>Consórcio / outra dívida</td>
+                  <td>R$ ____</td>
+                  <td>R$ ____</td>
+                  <td>___</td>
+                  <td>__/__/____</td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+        </section>
+
+        <section class="section">
+          <span class="section-title">Seção de movimentações</span>
+          <div class="section-actions">
+            <span class="mini-action">+ Registrar movimentação</span>
+            <span class="mini-action">Marcar como devolvido</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>De qual conta saiu</th>
+                <th>Para pagar qual dívida</th>
+                <th>Valor</th>
+                <th>Data estimada de devolução</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Poupança / Conta reserva</td>
+                <td>Dívida grande / cartão</td>
+                <td>R$ ____</td>
+                <td>__/__/____</td>
+                <td><span class="tag">Em aberto</span></td>
+              </tr>
+              <tr>
+                <td>Investimento / Viagem</td>
+                <td>Quitação extra</td>
+                <td>R$ ____</td>
+                <td>__/__/____</td>
+                <td><span class="tag">Devolvido</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <div class="footer-actions">
+          <div class="action">Exportar PDF</div>
+          <div class="action">Exportar JSON</div>
+          <div class="action">Carregar JSON anterior</div>
+          <div class="action">Salvar dados locais</div>
+        </div>
+        <div class="upload-note">
+          Wireframe pensado para um fluxo em arquivo único: dashboard com 3 gráficos, formulários mensais e importação/exportação para facilitar o pré-preenchimento do mês seguinte.
+        </div>
+      </footer>
+    </div>
+  </div>
+</body>
+</html>
