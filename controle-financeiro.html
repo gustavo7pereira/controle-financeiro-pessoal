@@ -218,6 +218,7 @@
       <h2 style="font-size:.95rem">Projeção de Quitação de Dívidas Grandes</h2>
     </div>
     <canvas id="chart-dividas" height="220"></canvas>
+    <p id="dividas-chart-empty" class="text-muted" style="display:none;text-align:center;padding:20px"></p>
   </div>
 </div>
 
@@ -899,39 +900,47 @@ function renderPrevidenciaChart() {
 function renderDividasChart() {
   const canvas = document.getElementById('chart-dividas');
   if (!canvas) return;
+  const emptyMessage = document.getElementById('dividas-chart-empty');
+  const showEmptyMessage = (message) => {
+    if (dividasChart) { dividasChart.destroy(); dividasChart = null; }
+    canvas.style.display = message ? 'none' : '';
+    if (emptyMessage) {
+      emptyMessage.textContent = message || '';
+      emptyMessage.style.display = message ? '' : 'none';
+    }
+  };
 
   if (!data.dividas.length) {
-    if (dividasChart) { dividasChart.destroy(); dividasChart = null; }
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    showEmptyMessage('Nenhuma dívida registrada');
     return;
   }
 
-  // Build a monthly schedule until all debts are paid off
-  const maxMonths = data.dividas.reduce((max,d) => {
-    const meses = debtMonths(d);
-    return Math.max(max, meses);
-  }, 0);
-
-  const labels = [];
-  const totals = [];
-  let running = data.dividas.reduce((a,d)=>a+(+d.saldo||0),0);
-  const totalParcela = data.dividas.reduce((a,d)=>a+(+d.parcela||0),0);
-  labels.push(monthName(new Date()));
-  totals.push(running);
-  for (let m = 1; m <= maxMonths; m++) {
-    running = Math.max(0, running - totalParcela);
-    labels.push(monthName(addMonths(new Date(), m)));
-    totals.push(running);
+  const dividasValidas = data.dividas.filter(d => (+d.saldo || 0) > 0 && (+d.parcela || 0) > 0);
+  if (!dividasValidas.length) {
+    showEmptyMessage('Nenhuma dívida válida para projeção');
+    return;
   }
+
+  canvas.style.display = '';
+  if (emptyMessage) emptyMessage.style.display = 'none';
+  const maxMonths = dividasValidas.reduce((max,d) => Math.max(max, debtMonths(d)), 0);
+  const labels = [];
+  labels.push(monthName(new Date()));
+  for (let m = 1; m <= maxMonths; m++) labels.push(monthName(addMonths(new Date(), m)));
 
   const chartData = {
     labels,
-    datasets: [{
-      label: 'Saldo devedor total',
-      data: totals,
-      backgroundColor: '#dc2626',
-    }]
+    datasets: dividasValidas.map((d, index) => {
+      const saldo = +d.saldo || 0;
+      const parcela = +d.parcela || 0;
+      const color = ['#dc2626', '#2563eb', '#16a34a', '#d97706', '#9333ea', '#0891b2'][index % 6];
+      return {
+        label: d.nome || 'Dívida sem nome',
+        data: Array.from({length: maxMonths + 1}, (_, month) => Math.max(0, saldo - parcela * month)),
+        backgroundColor: color,
+        borderColor: color,
+      };
+    })
   };
 
   if (dividasChart) {
@@ -945,8 +954,8 @@ function renderDividasChart() {
         responsive: true,
         scales: { y: { beginAtZero: true, ticks: { callback: v => fmt(v) } } },
         plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: (ctx) => fmt(ctx.parsed.y) } }
+          legend: { display: true },
+          tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${fmt(ctx.parsed.y)}` } }
         }
       }
     });
@@ -1275,7 +1284,7 @@ function removePrevidencia(id) {
 function renderDividas() {
   const container = document.getElementById('dividas-list');
   if (!data.dividas.length) {
-    container.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px">Nenhuma dívida cadastrada.</p>';
+    container.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px">Nenhuma dívida registrada</p>';
     return;
   }
   container.innerHTML = data.dividas.map(d => {
