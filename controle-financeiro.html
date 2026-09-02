@@ -750,8 +750,10 @@ function monthName(dt) {
 function debtMonths(d) {
   const saldo = +d.saldo || 0;
   const parcela = +d.parcela || 0;
+  const parcelas = +d.parcelas || 0;
+  if (parcelas > 0) return parcelas;
   const calculado = parcela > 0 ? Math.ceil(saldo / parcela) : 0;
-  return Math.max(calculado, +d.parcelas || 0, saldo > 0 ? 1 : 0);
+  return Math.max(calculado, saldo > 0 ? 1 : 0);
 }
 
 // ─── Dashboard ───────────────────────────────────────────
@@ -932,11 +934,11 @@ function renderDividasChart() {
     labels,
     datasets: dividasValidas.map((d, index) => {
       const saldo = +d.saldo || 0;
-      const parcela = +d.parcela || 0;
+      const meses = debtMonths(d) || 1;
       const color = ['#dc2626', '#2563eb', '#16a34a', '#d97706', '#9333ea', '#0891b2'][index % 6];
       return {
         label: d.nome || 'Dívida sem nome',
-        data: Array.from({length: maxMonths + 1}, (_, month) => Math.max(0, saldo - parcela * month)),
+        data: Array.from({length: maxMonths + 1}, (_, month) => month >= meses ? 0 : saldo * (1 - month / meses)),
         backgroundColor: color,
         borderColor: color,
       };
