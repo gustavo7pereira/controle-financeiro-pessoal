@@ -678,6 +678,17 @@ function debounce(fn, delay) {
   };
 }
 const debouncedSave = debounce(save, 400);
+const debouncedDashboardRefresh = debounce(() => {
+  renderDashCards();
+  renderChart();
+  renderPrevidenciaChart();
+  renderDividasChart();
+}, 400);
+
+function saveInputEdit() {
+  setData(currentMonth, currentYear, data);
+  debouncedDashboardRefresh();
+}
 
 // ─── Navigation ──────────────────────────────────────────
 function showSection(name) {
@@ -734,6 +745,12 @@ function addMonths(d, n) {
 }
 function monthName(dt) {
   return dt.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+}
+function debtMonths(d) {
+  const saldo = +d.saldo || 0;
+  const parcela = +d.parcela || 0;
+  const calculado = parcela > 0 ? Math.ceil(saldo / parcela) : 0;
+  return Math.max(calculado, +d.parcelas || 0, saldo > 0 ? 1 : 0);
 }
 
 // ─── Dashboard ───────────────────────────────────────────
@@ -892,9 +909,7 @@ function renderDividasChart() {
 
   // Build a monthly schedule until all debts are paid off
   const maxMonths = data.dividas.reduce((max,d) => {
-    const parcela = +d.parcela||0;
-    const saldo   = +d.saldo||0;
-    const meses   = parcela > 0 ? Math.ceil(saldo/parcela) : (+d.parcelas||0);
+    const meses = debtMonths(d);
     return Math.max(max, meses);
   }, 0);
 
@@ -1057,7 +1072,7 @@ function renderPoupancaTable(tableId, list, editType) {
         <input type="number" class="inp-sm" value="${p.saldoAnt===''||p.saldoAnt===null||p.saldoAnt===undefined?'':p.saldoAnt}" min="0" step="0.01"
           placeholder="0,00" oninput="updatePoupancaField('${p.id}','${editType}','saldoAnt',this.value)">
       </td>
-      <td>${fmtDiff(p.saldo, p.saldoAnt)}</td>
+      <td id="diff-${p.id}">${fmtDiff(p.saldo, p.saldoAnt)}</td>
       <td>
         <button class="btn-icon" onclick="openEditPoupancaModal('${p.id}','${editType}')">✏️</button>
         <button class="btn-icon" onclick="removePoupanca('${p.id}','${editType}')">🗑️</button>
@@ -1071,7 +1086,9 @@ function updatePoupancaField(id, editType, field, val) {
   const item = list.find(p => p.id === id);
   if (!item) return;
   item[field] = val === '' ? '' : Math.max(0, parseFloat(val)||0);
-  debouncedSave();
+  const cell = document.getElementById(`diff-${id}`);
+  if (cell) cell.innerHTML = fmtDiff(item.saldo, item.saldoAnt);
+  saveInputEdit();
 }
 
 function renderPrevidencias() {
@@ -1094,9 +1111,9 @@ function renderPrevidencias() {
           <input type="number" class="inp-sm" value="${p.saldo||0}" min="0" step="0.01"
             oninput="updatePrevidenciaField('${p.id}','saldo',this.value)">
         </td>
-        <td>${fmt(proj10)}</td>
-        <td>${fmt(proj20)}</td>
-        <td>${fmt(proj30)}</td>
+        <td id="proj10-${p.id}">${fmt(proj10)}</td>
+        <td id="proj20-${p.id}">${fmt(proj20)}</td>
+        <td id="proj30-${p.id}">${fmt(proj30)}</td>
         <td>
           <button class="btn-icon" onclick="openEditPrevidenciaModal('${p.id}')">✏️</button>
           <button class="btn-icon" onclick="removePrevidencia('${p.id}')">🗑️</button>
@@ -1108,8 +1125,14 @@ function renderPrevidencias() {
 function updatePrevidenciaField(id, field, val) {
   const item = data.previdencias.find(p => p.id === id);
   if (!item) return;
-  item[field] = Math.max(0, parseFloat(val)||0);
-  debouncedSave();
+  item[field] = val === '' ? '' : Math.max(0, parseFloat(val)||0);
+  const aporte = +item.aporte || 0;
+  const saldo = +item.saldo || 0;
+  [10, 20, 30].forEach(years => {
+    const cell = document.getElementById(`proj${years}-${id}`);
+    if (cell) cell.textContent = fmt(saldo + aporte * 12 * years);
+  });
+  saveInputEdit();
 }
 
 function openAddPoupancaModal() {
@@ -1259,7 +1282,7 @@ function renderDividas() {
     const saldo   = +d.saldo||0;
     const parcela = +d.parcela||0;
     const parcelas= +d.parcelas||0;
-    const mesesCalc = parcela > 0 ? Math.ceil(saldo / parcela) : parcelas;
+    const mesesCalc = debtMonths(d);
     const dtQuit  = addMonths(new Date(), mesesCalc);
     const pct     = d.saldoOriginal ? Math.min(100, ((d.saldoOriginal - saldo)/d.saldoOriginal*100)) : 0;
     return `
@@ -1485,7 +1508,7 @@ function renderRelatorio() {
         <table style="width:100%;border-collapse:collapse;font-size:.85rem">
           <tr><th style="text-align:left;padding:4px 0;color:var(--text-muted)">Nome</th><th style="text-align:right;color:var(--text-muted)">Saldo</th><th style="text-align:right;color:var(--text-muted)">Parcela</th><th style="text-align:right;color:var(--text-muted)">Quitação</th></tr>
           ${data.dividas.map(d=>{
-            const m = d.parcela > 0 ? Math.ceil(d.saldo/d.parcela) : d.parcelas;
+            const m = debtMonths(d);
             return `<tr><td style="padding:4px 0">${d.nome}</td><td class="text-right" style="color:var(--danger)">${fmt(d.saldo)}</td><td class="text-right">${fmt(d.parcela)}</td><td class="text-right">${monthName(addMonths(new Date(),m))}</td></tr>`;
           }).join('')}
         </table>
@@ -1514,22 +1537,54 @@ function exportPDF() {
   const doc = new jsPDF();
   let y = 16;
 
+  renderDashCards();
+  renderChart();
+  renderPrevidenciaChart();
+  renderDividasChart();
+
   doc.setFontSize(16);
-  doc.text(`Controle Financeiro Pessoal — ${label}`, 14, y);
+  doc.text(`Dashboard — ${label}`, 14, y);
   y += 10;
 
   doc.setFontSize(11);
   doc.autoTable({
     startY: y,
-    head: [['Resumo Mensal', 'Valor']],
+    head: [['Salário Líquido', 'Total Despesas', 'Saldo Final']],
     body: [
-      ['Salário Líquido', fmt(data.salary)],
-      ['Contas Fixas', '- ' + fmt(t.fixas)],
-      ['Contas Variáveis (Cartões)', '- ' + fmt(t.variaveis)],
-      ['Saldo Final', fmt(t.saldo)],
+      [fmt(data.salary), fmt(t.totalDesp), fmt(t.saldo)],
     ],
   });
   y = doc.lastAutoTable.finalY + 8;
+
+  const categories = [
+    ['Contas Fixas', t.fixas],
+    ['Contas Variáveis', t.variaveis],
+    ['Investimentos', t.prev],
+    ['Viagens', t.viagens],
+    ['Presentes', t.presentes],
+  ].filter(([, value]) => value > 0);
+  doc.autoTable({
+    startY: y,
+    head: [['Destino do Salário', 'Valor', '% do Salário']],
+    body: categories.map(([name, value]) => [name, fmt(value), `${(value / (data.salary || 1) * 100).toFixed(1)}%`]),
+  });
+
+  function addChartPage(title, chart) {
+    if (!chart) return;
+    doc.addPage();
+    doc.setFontSize(16);
+    doc.text(title, 14, 16);
+    doc.addImage(chart.toBase64Image(), 'PNG', 14, 25, 182, 110);
+  }
+
+  addChartPage('Destino do Salário', salaryChart);
+  addChartPage('Projeção Previdências', previdenciaChart);
+  addChartPage('Quitação Dívidas', dividasChart);
+  doc.addPage();
+  y = 16;
+  doc.setFontSize(16);
+  doc.text(`Controle Financeiro Pessoal — ${label}`, 14, y);
+  y += 10;
 
   doc.autoTable({
     startY: y,
@@ -1571,7 +1626,7 @@ function exportPDF() {
       startY: y,
       head: [['Dívida', 'Saldo', 'Parcela', 'Quitação Estimada']],
       body: data.dividas.map(d => {
-        const m = d.parcela > 0 ? Math.ceil(d.saldo/d.parcela) : d.parcelas;
+        const m = debtMonths(d);
         return [d.nome, fmt(d.saldo), fmt(d.parcela), monthName(addMonths(new Date(), m))];
       }),
     });
