@@ -651,11 +651,23 @@ function loadAll() {
 }
 function saveAll(all) { localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); }
 
+// Imported JSON may carry numeric/duplicate ids; handlers compare ids as strings.
+function normalizeIds(d) {
+  const seen = new Set();
+  const fix = list => (list || []).forEach(item => {
+    if (typeof item.id !== 'string' || seen.has(item.id)) item.id = uid();
+    seen.add(item.id);
+  });
+  if (d.contas) { fix(d.contas.fixas); fix(d.contas.variaveis); }
+  ['poupancas','presentes','viagens','previdencias','dividas','movimentacoes'].forEach(k => fix(d[k]));
+  return d;
+}
+
 function getData(m, y) {
   const all = loadAll();
   const k = monthKey(m, y);
   if (!all[k]) all[k] = defaultData();
-  return all[k];
+  return normalizeIds(all[k]);
 }
 
 function setData(m, y, data) {
@@ -1004,7 +1016,14 @@ function renderContaTable(tableId, list, type) {
 function updateContaValor(id, type, val) {
   const list = type === 'fixa' ? data.contas.fixas : data.contas.variaveis;
   const item = list.find(c => c.id === id);
-  if (item) { item.valor = Math.max(0, parseFloat(val)||0); debouncedSave(); }
+  if (!item) return;
+  item.valor = Math.max(0, parseFloat(val)||0);
+  const sum = l => l.reduce((a,c)=>a+(+c.valor||0),0);
+  const tF = sum(data.contas.fixas), tV = sum(data.contas.variaveis);
+  document.getElementById('total-fixas').textContent     = fmt(tF);
+  document.getElementById('total-variaveis').textContent = fmt(tV);
+  document.getElementById('total-contas').textContent    = fmt(tF + tV);
+  saveInputEdit();
 }
 
 function toggleContaStatus(id, type) {
@@ -1698,7 +1717,7 @@ function importJSON(event) {
       // pode atualizá-lo conforme o extrato mais recente.
       merged.previdencias = (merged.previdencias||[]).map(item => ({...item}));
 
-      data = merged;
+      data = normalizeIds(merged);
       setData(currentMonth, currentYear, data);
       refreshAll();
 
